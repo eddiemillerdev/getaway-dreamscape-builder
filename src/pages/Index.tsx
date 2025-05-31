@@ -4,6 +4,7 @@ import Hero from '@/components/Hero';
 import Destinations from '@/components/Destinations';
 import PropertyTypes from '@/components/PropertyTypes';
 import FeaturedListings from '@/components/FeaturedListings';
+import Experiences from '@/components/Experiences';
 import Footer from '@/components/Footer';
 
 const Index = () => {
@@ -15,6 +16,7 @@ const Index = () => {
         <Destinations />
         <PropertyTypes />
         <FeaturedListings />
+        <Experiences />
       </div>
       <Footer />
     </div>
