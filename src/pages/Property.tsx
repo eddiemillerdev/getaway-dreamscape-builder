@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star, Heart, Share, MapPin, Users, Bed, Bath, Wifi, Car } from 'lucide-react';
+import { Star, Heart, Share, MapPin, Users, Bed, Bath, Wifi, Car, Home } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format, differenceInDays } from 'date-fns';
 import Header from '@/components/Header';
