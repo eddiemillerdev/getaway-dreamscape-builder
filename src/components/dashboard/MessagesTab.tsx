@@ -19,11 +19,11 @@ interface Conversation {
   created_at: string;
   properties: {
     title: string;
-  };
-  profiles: {
+  } | null;
+  participant_profile: {
     first_name: string;
     last_name: string;
-  };
+  } | null;
   last_message?: {
     content: string;
     created_at: string;
@@ -76,17 +76,28 @@ const MessagesTab = () => {
           participant_2,
           property_id,
           created_at,
-          properties(title),
-          profiles!conversations_participant_2_fkey(first_name, last_name)
+          properties(title)
         `)
         .or(`participant_1.eq.${user.id},participant_2.eq.${user.id}`)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      // Fetch last message for each conversation
-      const conversationsWithMessages = await Promise.all(
+      // Fetch participant profiles and last messages separately
+      const conversationsWithDetails = await Promise.all(
         (data || []).map(async (conversation) => {
+          // Get the other participant's profile
+          const otherParticipantId = conversation.participant_1 === user.id 
+            ? conversation.participant_2 
+            : conversation.participant_1;
+
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('first_name, last_name')
+            .eq('id', otherParticipantId)
+            .single();
+
+          // Get last message
           const { data: lastMessage } = await supabase
             .from('messages')
             .select('content, created_at, sender_id')
@@ -97,12 +108,13 @@ const MessagesTab = () => {
 
           return {
             ...conversation,
+            participant_profile: profileData,
             last_message: lastMessage
           };
         })
       );
 
-      setConversations(conversationsWithMessages);
+      setConversations(conversationsWithDetails);
     } catch (error) {
       console.error('Error fetching conversations:', error);
     } finally {
@@ -118,26 +130,33 @@ const MessagesTab = () => {
           id,
           content,
           sender_id,
-          created_at,
-          profiles!messages_sender_id_fkey(first_name, last_name)
+          created_at
         `)
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
 
-      const formattedMessages = (data || []).map(msg => ({
-        id: msg.id,
-        content: msg.content,
-        sender_id: msg.sender_id,
-        created_at: msg.created_at,
-        sender: {
-          first_name: msg.profiles?.first_name || 'Unknown',
-          last_name: msg.profiles?.last_name || 'User'
-        }
-      }));
+      // Fetch sender profiles separately
+      const messagesWithSenders = await Promise.all(
+        (data || []).map(async (msg) => {
+          const { data: senderData } = await supabase
+            .from('profiles')
+            .select('first_name, last_name')
+            .eq('id', msg.sender_id)
+            .single();
 
-      setMessages(formattedMessages);
+          return {
+            ...msg,
+            sender: {
+              first_name: senderData?.first_name || 'Unknown',
+              last_name: senderData?.last_name || 'User'
+            }
+          };
+        })
+      );
+
+      setMessages(messagesWithSenders);
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
@@ -173,12 +192,6 @@ const MessagesTab = () => {
     }
   };
 
-  const getOtherParticipant = (conversation: Conversation) => {
-    return conversation.participant_1 === user?.id 
-      ? conversation.profiles 
-      : conversation.profiles;
-  };
-
   if (loading) {
     return (
       <Card>
@@ -209,46 +222,43 @@ const MessagesTab = () => {
               </div>
             ) : (
               <div className="space-y-1">
-                {conversations.map((conversation) => {
-                  const otherParticipant = getOtherParticipant(conversation);
-                  return (
-                    <button
-                      key={conversation.id}
-                      onClick={() => setSelectedConversation(conversation.id)}
-                      className={`w-full p-4 text-left hover:bg-gray-50 border-b transition-colors ${
-                        selectedConversation === conversation.id ? 'bg-blue-50 border-blue-200' : ''
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2">
-                            <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                              <User className="h-4 w-4 text-gray-600" />
-                            </div>
-                            <div>
-                              <p className="font-medium text-sm">
-                                {otherParticipant?.first_name} {otherParticipant?.last_name}
-                              </p>
-                              <p className="text-xs text-gray-500 truncate">
-                                {conversation.properties?.title}
-                              </p>
-                            </div>
+                {conversations.map((conversation) => (
+                  <button
+                    key={conversation.id}
+                    onClick={() => setSelectedConversation(conversation.id)}
+                    className={`w-full p-4 text-left hover:bg-gray-50 border-b transition-colors ${
+                      selectedConversation === conversation.id ? 'bg-blue-50 border-blue-200' : ''
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                            <User className="h-4 w-4 text-gray-600" />
                           </div>
-                          {conversation.last_message && (
-                            <p className="text-sm text-gray-600 mt-1 truncate">
-                              {conversation.last_message.content}
+                          <div>
+                            <p className="font-medium text-sm">
+                              {conversation.participant_profile?.first_name} {conversation.participant_profile?.last_name}
                             </p>
-                          )}
+                            <p className="text-xs text-gray-500 truncate">
+                              {conversation.properties?.title}
+                            </p>
+                          </div>
                         </div>
                         {conversation.last_message && (
-                          <span className="text-xs text-gray-400">
-                            {format(new Date(conversation.last_message.created_at), 'MMM d')}
-                          </span>
+                          <p className="text-sm text-gray-600 mt-1 truncate">
+                            {conversation.last_message.content}
+                          </p>
                         )}
                       </div>
-                    </button>
-                  );
-                })}
+                      {conversation.last_message && (
+                        <span className="text-xs text-gray-400">
+                          {format(new Date(conversation.last_message.created_at), 'MMM d')}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                ))}
               </div>
             )}
           </ScrollArea>
