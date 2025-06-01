@@ -10,6 +10,7 @@ import { DateRange } from 'react-day-picker';
 
 interface SearchBarProps {
   onSearch?: (destination: string, dateRange: DateRange | undefined, guests: GuestCount) => void;
+  compact?: boolean;
 }
 
 interface GuestCount {
@@ -33,7 +34,7 @@ const destinations = [
   'Carmel-by-the-Sea, California'
 ];
 
-const SearchBar = ({ onSearch }: SearchBarProps) => {
+const SearchBar = ({ onSearch, compact = false }: SearchBarProps) => {
   const [destination, setDestination] = useState('');
   const [showDestinations, setShowDestinations] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -62,14 +63,20 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
     onSearch?.(destination, dateRange, guests);
   };
 
+  const containerClasses = compact 
+    ? "bg-white rounded-full shadow-lg border border-gray-200 p-1 flex items-center"
+    : "bg-white rounded-full shadow-xl border border-gray-200 p-2 flex items-center max-w-4xl mx-auto";
+
+  const inputPadding = compact ? "px-3 py-2" : "px-4 py-3";
+
   return (
-    <div className="bg-white rounded-full shadow-xl border border-gray-200 p-2 flex items-center max-w-4xl mx-auto">
+    <div className={containerClasses}>
       {/* Destination */}
       <div className="flex-1 relative">
-        <div className="flex items-center px-4 py-3">
+        <div className={`flex items-center ${inputPadding}`}>
           <MapPin className="h-5 w-5 text-gray-400 mr-3" />
           <div className="flex-1">
-            <label className="text-xs font-medium text-gray-700 block">Where</label>
+            {!compact && <label className="text-xs font-medium text-gray-700 block">Where</label>}
             <Input
               type="text"
               placeholder="Search destinations"
@@ -111,10 +118,10 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
       <div className="flex-1">
         <Popover>
           <PopoverTrigger asChild>
-            <button className="flex items-center px-4 py-3 w-full text-left">
+            <button className={`flex items-center ${inputPadding} w-full text-left`}>
               <Calendar className="h-5 w-5 text-gray-400 mr-3" />
               <div className="flex-1">
-                <label className="text-xs font-medium text-gray-700 block">When</label>
+                {!compact && <label className="text-xs font-medium text-gray-700 block">When</label>}
                 <span className="text-sm font-medium text-gray-900">
                   {dateRange?.from ? (
                     dateRange.to ? (
@@ -148,10 +155,10 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
       <div className="flex-1">
         <Popover>
           <PopoverTrigger asChild>
-            <button className="flex items-center px-4 py-3 w-full text-left">
+            <button className={`flex items-center ${inputPadding} w-full text-left`}>
               <Users className="h-5 w-5 text-gray-400 mr-3" />
               <div className="flex-1">
-                <label className="text-xs font-medium text-gray-700 block">Who</label>
+                {!compact && <label className="text-xs font-medium text-gray-700 block">Who</label>}
                 <span className="text-sm font-medium text-gray-900">
                   {totalGuests} guest{totalGuests !== 1 ? 's' : ''}
                   {guests.infants > 0 && `, ${guests.infants} infant${guests.infants !== 1 ? 's' : ''}`}
@@ -252,7 +259,7 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
       {/* Search Button */}
       <Button 
         onClick={handleSearch}
-        className="bg-rose-500 hover:bg-rose-600 text-white rounded-full p-3 ml-2"
+        className={`bg-rose-500 hover:bg-rose-600 text-white rounded-full ${compact ? 'p-2 ml-1' : 'p-3 ml-2'}`}
       >
         <Search className="h-5 w-5" />
       </Button>

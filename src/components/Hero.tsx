@@ -25,7 +25,7 @@ const Hero = () => {
 
       {/* Search Bar Overlay */}
       <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 w-full max-w-4xl px-4">
-        <SearchBar />
+        <SearchBar compact={false} />
       </div>
     </div>
   );

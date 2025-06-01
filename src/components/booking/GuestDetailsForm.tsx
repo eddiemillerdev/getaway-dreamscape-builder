@@ -32,7 +32,7 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
         email: user.email || '',
       });
     }
-  }, [user]);
+  }, [user, setGuestDetails]);
 
   return (
     <Card>
