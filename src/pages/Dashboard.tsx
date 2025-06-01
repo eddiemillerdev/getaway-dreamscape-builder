@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,20 +15,7 @@ import EditProfileModal from '@/components/modals/EditProfileModal';
 import PaymentPreferencesModal from '@/components/modals/PaymentPreferencesModal';
 import HostRequestModal from '@/components/modals/HostRequestModal';
 import WalletSection from '@/components/WalletSection';
-
-interface DashboardBooking {
-  id: string;
-  check_in_date: string;
-  check_out_date: string;
-  guests: number;
-  total_amount: number;
-  status: string;
-  properties: {
-    id: string;
-    title: string;
-    address: string;
-  };
-}
+import { DashboardBooking, TripDetailsBooking } from '@/types/booking';
 
 interface Profile {
   id: string;
@@ -44,7 +32,7 @@ const Dashboard = () => {
   const [bookings, setBookings] = useState<DashboardBooking[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedBooking, setSelectedBooking] = useState<DashboardBooking | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<TripDetailsBooking | null>(null);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [paymentPreferencesOpen, setPaymentPreferencesOpen] = useState(false);
   const [hostRequestOpen, setHostRequestOpen] = useState(false);
@@ -85,7 +73,7 @@ const Dashboard = () => {
           status,
           properties(id, title, address)
         `)
-        .eq('user_id', user.id)
+        .eq('guest_id', user.id)
         .order('check_in_date', { ascending: false });
 
       if (bookingsError) throw bookingsError;
@@ -94,6 +82,33 @@ const Dashboard = () => {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleViewDetails = async (booking: DashboardBooking) => {
+    try {
+      // Fetch full booking details for the modal
+      const { data, error } = await supabase
+        .from('bookings')
+        .select(`
+          id,
+          check_in_date,
+          check_out_date,
+          guests,
+          total_amount,
+          status,
+          nights,
+          special_requests,
+          properties(id, title, address, property_type, host_id)
+        `)
+        .eq('id', booking.id)
+        .single();
+
+      if (error) throw error;
+      
+      setSelectedBooking(data as TripDetailsBooking);
+    } catch (error) {
+      console.error('Error fetching booking details:', error);
     }
   };
 
@@ -245,7 +260,7 @@ const Dashboard = () => {
                                 <span className="text-lg font-semibold">${booking.total_amount}</span>
                                 <Button
                                   variant="outline"
-                                  onClick={() => setSelectedBooking(booking)}
+                                  onClick={() => handleViewDetails(booking)}
                                 >
                                   View Details
                                 </Button>

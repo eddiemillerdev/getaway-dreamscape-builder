@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -19,10 +20,11 @@ import {
 interface PaymentMethodModalProps {
   open: boolean;
   onClose: () => void;
+  onSave?: (paymentData: any) => void;
   onSuccess?: () => void;
 }
 
-const PaymentMethodModal = ({ open, onClose, onSuccess }: PaymentMethodModalProps) => {
+const PaymentMethodModal = ({ open, onClose, onSave, onSuccess }: PaymentMethodModalProps) => {
   const [selectedMethod, setSelectedMethod] = useState<'credit' | 'wire' | 'crypto'>('credit');
   const [loading, setLoading] = useState(false);
   const [cardData, setCardData] = useState({
@@ -115,6 +117,16 @@ const PaymentMethodModal = ({ open, onClose, onSuccess }: PaymentMethodModalProp
           title: 'Payment Method Saved',
           description: 'Your credit card has been saved for future use.',
         });
+
+        // Call onSave for booking flow or onSuccess for settings flow
+        if (onSave) {
+          onSave({
+            type: 'Credit Card',
+            details: `**** **** **** ${cleanNumber.slice(-4)}`,
+            name: cardData.name,
+            brand: cardType
+          });
+        }
       }
       
       if (onSuccess) {
