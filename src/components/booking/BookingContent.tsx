@@ -47,18 +47,21 @@ const BookingContent = ({
     setPaymentMethod(paymentData);
   };
 
-  // Early return if property is not available
+  // Safety check - should not happen with proper initialization
   if (!bookingState.property) {
+    console.error('BookingContent rendered without property');
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading property details...</div>
+        <div className="text-lg">Error: Property data missing</div>
       </div>
     );
   }
 
-  // Set default dates if they're missing
+  // Ensure we have valid dates
   const checkIn = bookingState.checkIn || new Date();
   const checkOut = bookingState.checkOut || new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const nights = bookingState.nights || 1;
+  const totalAmount = bookingState.totalAmount || 0;
 
   return (
     <>
@@ -92,8 +95,8 @@ const BookingContent = ({
         <div className="space-y-6">
           <BookingSummary
             property={bookingState.property}
-            nights={bookingState.nights || 1}
-            totalAmount={bookingState.totalAmount}
+            nights={nights}
+            totalAmount={totalAmount}
             onConfirmBooking={onConfirmBooking}
             loading={loading}
           />

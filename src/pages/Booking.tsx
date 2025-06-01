@@ -1,9 +1,10 @@
+
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { scrollToTop } from '@/utils/scrollToTop';
+import { scrollToTopImmediate } from '@/utils/scrollToTop';
 import { useBookingState } from '@/hooks/useBookingState';
 import { useBookingForm } from '@/hooks/useBookingForm';
 import BookingLayout from '@/components/booking/BookingLayout';
@@ -16,6 +17,7 @@ const Booking = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { bookingState, updateBookingState } = useBookingState();
+  const [isInitialized, setIsInitialized] = useState(false);
   const [propertyLoading, setPropertyLoading] = useState(false);
   const {
     loading,
@@ -28,76 +30,107 @@ const Booking = () => {
     handleBooking
   } = useBookingForm();
 
-  // Initialize booking state from route or saved state
+  // Scroll to top immediately when component mounts
   useEffect(() => {
-    console.log('Booking page mounted');
-    console.log('Location state:', location.state);
-    console.log('Params:', params);
-    console.log('Current booking state:', bookingState);
-    
-    const routeState = location.state;
-    const propertyId = params.id; // Get property ID from URL params (/booking/:id)
-    
-    if (routeState && routeState.property) {
-      console.log('Using route state property');
-      updateBookingState({
-        property: routeState.property,
-        checkIn: routeState.checkIn,
-        checkOut: routeState.checkOut,
-        guests: routeState.guests,
-        nights: routeState.nights,
-        totalAmount: routeState.totalAmount
+    scrollToTopImmediate();
+  }, []);
+
+  // Initialize booking state from route or fetch property
+  useEffect(() => {
+    const initializeBooking = async () => {
+      console.log('Initializing booking...');
+      console.log('Location state:', location.state);
+      console.log('Params:', params);
+      console.log('Current booking state:', bookingState);
+      
+      const routeState = location.state;
+      const propertyId = params.id;
+      
+      // If we have route state with property, use it
+      if (routeState?.property) {
+        console.log('Using route state property');
+        updateBookingState({
+          property: routeState.property,
+          checkIn: routeState.checkIn ? new Date(routeState.checkIn) : new Date(),
+          checkOut: routeState.checkOut ? new Date(routeState.checkOut) : new Date(Date.now() + 24 * 60 * 60 * 1000),
+          guests: routeState.guests || 2,
+          nights: routeState.nights || 1,
+          totalAmount: routeState.totalAmount || 0
+        });
+        setIsInitialized(true);
+        return;
+      }
+      
+      // If we already have a property in state, we're good
+      if (bookingState.property) {
+        console.log('Using existing property from state');
+        setIsInitialized(true);
+        return;
+      }
+      
+      // If we have a property ID but no property, fetch it
+      if (propertyId) {
+        console.log('Fetching property with ID:', propertyId);
+        await fetchProperty(propertyId);
+        return;
+      }
+      
+      // No property ID and no state, redirect to home
+      console.log('No property found, redirecting to home');
+      toast({
+        title: 'Property Not Found',
+        description: 'Please select a property to book.',
+        variant: 'destructive',
       });
-    } else if (propertyId && !bookingState.property) {
-      console.log('Fetching property with ID:', propertyId);
-      // Fetch property if we have a property ID in URL params but no state
-      fetchProperty(propertyId);
-    } else if (!propertyId && !bookingState.property) {
-      console.log('No property ID and no saved state, redirecting to home');
-      // No property ID in URL and no saved state, redirect to home
       navigate('/');
-      return;
+    };
+
+    if (!isInitialized) {
+      initializeBooking();
     }
-    
-    scrollToTop();
-  }, [location.state, params.id, bookingState.property]);
+  }, [location.state, params.id, bookingState.property, isInitialized]);
 
   const fetchProperty = async (propertyId: string) => {
-    console.log('Starting property fetch for ID:', propertyId);
     setPropertyLoading(true);
     try {
-      const { data: propertyData, error: propertyError } = await supabase
+      console.log('Fetching property data...');
+      const { data: propertyData, error } = await supabase
         .from('properties')
         .select('*')
         .eq('id', propertyId)
         .single();
 
-      console.log('Property fetch result:', { propertyData, propertyError });
-
-      if (propertyError) {
-        console.error('Property fetch error:', propertyError);
-        throw propertyError;
+      if (error) {
+        console.error('Property fetch error:', error);
+        throw error;
       }
 
-      if (propertyData) {
-        console.log('Property found, updating state');
-        // Set default booking values if not already set
-        const checkIn = bookingState.checkIn || new Date();
-        const checkOut = bookingState.checkOut || new Date(Date.now() + 24 * 60 * 60 * 1000);
-        const guests = bookingState.guests || 2;
-        const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
-        const totalAmount = (nights * propertyData.price_per_night) + (propertyData.cleaning_fee || 0) + (propertyData.service_fee || 0);
-        
-        updateBookingState({
-          property: propertyData,
-          checkIn,
-          checkOut,
-          guests,
-          nights,
-          totalAmount
-        });
+      if (!propertyData) {
+        throw new Error('Property not found');
       }
-    } catch (error) {
+
+      console.log('Property fetched successfully:', propertyData);
+      
+      // Set default booking values
+      const checkIn = new Date();
+      const checkOut = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const guests = 2;
+      const nights = 1;
+      const totalAmount = (nights * propertyData.price_per_night) + 
+                         (propertyData.cleaning_fee || 0) + 
+                         (propertyData.service_fee || 0);
+      
+      updateBookingState({
+        property: propertyData,
+        checkIn,
+        checkOut,
+        guests,
+        nights,
+        totalAmount
+      });
+      
+      setIsInitialized(true);
+    } catch (error: any) {
       console.error('Error fetching property:', error);
       toast({
         title: 'Error',
@@ -115,7 +148,7 @@ const Booking = () => {
     if (user && !paymentMethod) {
       loadDefaultPaymentMethod();
     }
-  }, [user]);
+  }, [user, paymentMethod]);
 
   const loadDefaultPaymentMethod = async () => {
     try {
@@ -124,7 +157,7 @@ const Booking = () => {
         .select('*')
         .eq('user_id', user?.id)
         .eq('is_default', true)
-        .single();
+        .maybeSingle();
 
       if (data && !error) {
         setPaymentMethod({
@@ -139,7 +172,8 @@ const Booking = () => {
     }
   };
 
-  if (propertyLoading) {
+  // Show loading state
+  if (!isInitialized || propertyLoading) {
     return (
       <BookingLayout>
         <div className="flex items-center justify-center h-64">
@@ -149,11 +183,20 @@ const Booking = () => {
     );
   }
 
+  // Show error state if no property after initialization
   if (!bookingState.property) {
     return (
       <BookingLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Property not found</div>
+          <div className="text-center">
+            <div className="text-lg mb-4">Property not found</div>
+            <button 
+              onClick={() => navigate('/')}
+              className="px-4 py-2 bg-rose-600 text-white rounded hover:bg-rose-700"
+            >
+              Return Home
+            </button>
+          </div>
         </div>
       </BookingLayout>
     );
