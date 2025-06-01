@@ -31,10 +31,16 @@ const Booking = () => {
 
   // Initialize booking state from route or saved state
   useEffect(() => {
+    console.log('Booking page mounted');
+    console.log('Location state:', location.state);
+    console.log('Params:', params);
+    console.log('Current booking state:', bookingState);
+    
     const routeState = location.state;
     const propertyId = params.id; // Get property ID from URL params (/booking/:id)
     
     if (routeState && routeState.property) {
+      console.log('Using route state property');
       updateBookingState({
         property: routeState.property,
         checkIn: routeState.checkIn,
@@ -44,9 +50,11 @@ const Booking = () => {
         totalAmount: routeState.totalAmount
       });
     } else if (!bookingState.property && propertyId) {
+      console.log('Fetching property with ID:', propertyId);
       // Fetch property if we have a property ID in URL params but no state
       fetchProperty(propertyId);
     } else if (!propertyId) {
+      console.log('No property ID, redirecting to home');
       // No property ID in URL, redirect to home
       navigate('/');
       return;
@@ -56,6 +64,7 @@ const Booking = () => {
   }, [location.state, params.id]);
 
   const fetchProperty = async (propertyId: string) => {
+    console.log('Starting property fetch for ID:', propertyId);
     setPropertyLoading(true);
     try {
       const { data: propertyData, error: propertyError } = await supabase
@@ -64,19 +73,29 @@ const Booking = () => {
         .eq('id', propertyId)
         .single();
 
-      if (propertyError) throw propertyError;
+      console.log('Property fetch result:', { propertyData, propertyError });
+
+      if (propertyError) {
+        console.error('Property fetch error:', propertyError);
+        throw propertyError;
+      }
 
       if (propertyData) {
+        console.log('Property found, updating state');
         // Set default booking values if not already set
         const checkIn = bookingState.checkIn || new Date();
         const checkOut = bookingState.checkOut || new Date(Date.now() + 24 * 60 * 60 * 1000);
         const guests = bookingState.guests || 2;
+        const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+        const totalAmount = (nights * propertyData.price_per_night) + (propertyData.cleaning_fee || 0) + (propertyData.service_fee || 0);
         
         updateBookingState({
           property: propertyData,
           checkIn,
           checkOut,
-          guests
+          guests,
+          nights,
+          totalAmount
         });
       }
     } catch (error) {
