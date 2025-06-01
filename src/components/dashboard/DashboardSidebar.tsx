@@ -2,7 +2,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, Settings, CreditCard, UserPlus, Wallet } from 'lucide-react';
+import { CalendarDays, Settings, CreditCard, UserPlus, Wallet, MessageCircle } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -56,6 +56,16 @@ const DashboardSidebar = ({
             >
               <CalendarDays className="h-5 w-5 mr-3" />
               My Trips
+            </button>
+            
+            <button
+              onClick={() => setActiveTab('messages')}
+              className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors ${
+                activeTab === 'messages' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <MessageCircle className="h-5 w-5 mr-3" />
+              Messages
             </button>
             
             <button
