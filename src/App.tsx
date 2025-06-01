@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -50,7 +49,6 @@ const App = () => (
             <Route path="/destination/:id" element={<Destination />} />
             <Route path="/experiences" element={<ExperiencesPage />} />
             <Route path="/home/:id" element={<Property />} />
-            <Route path="/property/:id" element={<Property />} /> {/* Redirect old route */}
             <Route path="/experience/:id" element={<Experience />} />
             <Route path="/booking/:id" element={<Booking />} />
             <Route path="/booking" element={<Booking />} />

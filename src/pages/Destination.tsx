@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -186,7 +185,7 @@ const Destination = () => {
                 return (
                   <Link 
                     key={property.id}
-                    to={`/property/${property.id}`}
+                    to={`/home/${property.id}`}
                     className="group cursor-pointer transform hover:scale-105 transition-transform duration-300"
                   >
                     <div className="relative">

@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { useBookingState } from '@/hooks/useBookingState';
 import { createValidator } from '@/utils/validation';
-import { secureLog, createRateLimiter } from '@/utils/security';
+import { secureLog, createRateLimiter, isDevelopment } from '@/utils/security';
 
 interface GuestDetails {
   firstName: string;
@@ -25,8 +25,13 @@ interface PaymentMethod {
   brand: string;
 }
 
-// Rate limiter for booking attempts (max 3 attempts per 10 minutes)
-const bookingRateLimiter = createRateLimiter(3, 10 * 60 * 1000);
+// Rate limiter for booking attempts
+// More lenient in development (10 attempts per minute)
+// Stricter in production (3 attempts per 10 minutes)
+const bookingRateLimiter = createRateLimiter(
+  isDevelopment() ? 10 : 3,
+  isDevelopment() ? 60 * 1000 : 10 * 60 * 1000
+);
 
 export const useBookingForm = () => {
   const navigate = useNavigate();

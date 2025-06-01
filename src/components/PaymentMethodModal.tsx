@@ -101,36 +101,58 @@ const PaymentMethodModal = ({ open, onClose, onSave, onSuccess }: PaymentMethodM
     
     try {
       if (selectedMethod === 'credit') {
-        // Save credit card to database
         const cleanNumber = cardData.number.replace(/\s/g, '');
         const [month, year] = cardData.expiry.split('/');
         
-        const { error } = await supabase
-          .from('payment_methods')
-          .insert({
-            user_id: user?.id,
-            card_last_four: cleanNumber.slice(-4),
-            card_brand: cardType,
-            expiry_month: parseInt(month),
-            expiry_year: parseInt(year) + 2000,
-            cardholder_name: cardData.name,
-            is_default: true
-          });
+        // Only save to database if user is authenticated
+        if (user) {
+          const { error } = await supabase
+            .from('payment_methods')
+            .insert({
+              user_id: user.id,
+              card_last_four: cleanNumber.slice(-4),
+              card_brand: cardType,
+              expiry_month: parseInt(month),
+              expiry_year: parseInt(year) + 2000,
+              cardholder_name: cardData.name,
+              is_default: true
+            });
 
-        if (error) throw error;
+          if (error) throw error;
+        }
 
-        toast({
-          title: 'Payment Method Saved',
-          description: 'Your credit card has been saved for future use.',
-        });
-
-        // Call onSave for booking flow or onSuccess for settings flow
+        // Always call onSave with the payment method data
         if (onSave) {
           onSave({
             type: 'Credit Card',
             details: `**** **** **** ${cleanNumber.slice(-4)}`,
             name: cardData.name,
             brand: cardType
+          });
+        }
+
+        toast({
+          title: 'Payment Method Saved',
+          description: user 
+            ? 'Your credit card has been saved for future use.'
+            : 'Your credit card has been saved for this booking.',
+        });
+      } else if (selectedMethod === 'wire') {
+        if (onSave) {
+          onSave({
+            type: 'Bank Wire',
+            details: 'Wire transfer instructions will be provided after booking',
+            name: cardData.name || 'Bank Wire',
+            brand: 'wire'
+          });
+        }
+      } else if (selectedMethod === 'crypto') {
+        if (onSave) {
+          onSave({
+            type: 'Cryptocurrency',
+            details: 'Bitcoin payment address will be provided after booking',
+            name: cardData.name || 'Bitcoin',
+            brand: 'crypto'
           });
         }
       }

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -85,7 +84,7 @@ const FeaturedListings = () => {
           return (
             <Link 
               key={property.id}
-              to={`/property/${property.id}`}
+              to={`/home/${property.id}`}
               className="group cursor-pointer transform hover:scale-105 transition-transform duration-300"
             >
               <div className="relative">
