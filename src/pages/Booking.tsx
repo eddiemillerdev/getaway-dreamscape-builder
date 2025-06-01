@@ -32,6 +32,8 @@ const Booking = () => {
   // Initialize booking state from route or saved state
   useEffect(() => {
     const routeState = location.state;
+    const propertyId = params.id; // Get property ID from URL params (/booking/:id)
+    
     if (routeState && routeState.property) {
       updateBookingState({
         property: routeState.property,
@@ -41,19 +43,17 @@ const Booking = () => {
         nights: routeState.nights,
         totalAmount: routeState.totalAmount
       });
-    } else if (!bookingState.property) {
-      // Try to fetch property if we have a property ID in URL params
-      const propertyId = params.propertyId || new URLSearchParams(location.search).get('property');
-      if (propertyId) {
-        fetchProperty(propertyId);
-      } else {
-        navigate('/');
-        return;
-      }
+    } else if (!bookingState.property && propertyId) {
+      // Fetch property if we have a property ID in URL params but no state
+      fetchProperty(propertyId);
+    } else if (!propertyId) {
+      // No property ID in URL, redirect to home
+      navigate('/');
+      return;
     }
     
     scrollToTop();
-  }, [location.state]);
+  }, [location.state, params.id]);
 
   const fetchProperty = async (propertyId: string) => {
     setPropertyLoading(true);

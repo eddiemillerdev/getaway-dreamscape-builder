@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar } from '@/components/ui/calendar';
@@ -71,7 +70,7 @@ const BookingCard = ({ property }: BookingCardProps) => {
       return;
     }
 
-    navigate('/booking', {
+    navigate(`/booking/${property.id}`, {
       state: {
         property,
         checkIn: dateRange.from,
