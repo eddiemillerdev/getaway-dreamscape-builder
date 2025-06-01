@@ -11,6 +11,7 @@ import Villas from "./pages/Villas";
 import Destinations from "./pages/Destinations";
 import ExperiencesPage from "./pages/ExperiencesPage";
 import Property from "./pages/Property";
+import Experience from "./pages/Experience";
 import Booking from "./pages/Booking";
 import BookingSuccess from "./pages/BookingSuccess";
 import Dashboard from "./pages/Dashboard";
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/destinations" element={<Destinations />} />
             <Route path="/experiences" element={<ExperiencesPage />} />
             <Route path="/property/:id" element={<Property />} />
+            <Route path="/experience/:id" element={<Experience />} />
             <Route path="/booking" element={<Booking />} />
             <Route path="/booking-success" element={<BookingSuccess />} />
             <Route path="/dashboard" element={<Dashboard />} />

@@ -1,16 +1,25 @@
 
 import { useState, useEffect } from 'react';
+import { Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Star, Heart } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Property {
   id: string;
   title: string;
-  property_type: string;
   price_per_night: number;
-  address: string;
-  property_images: { image_url: string; is_primary: boolean }[];
+  bedrooms: number;
+  bathrooms: number;
+  max_guests: number;
+  destination: {
+    name: string;
+    country: string;
+    state_province: string;
+  };
+  property_images: {
+    image_url: string;
+    is_primary: boolean;
+  }[];
 }
 
 const FeaturedListings = () => {
@@ -28,13 +37,12 @@ const FeaturedListings = () => {
         .select(`
           id,
           title,
-          property_type,
           price_per_night,
-          address,
-          property_images (
-            image_url,
-            is_primary
-          )
+          bedrooms,
+          bathrooms,
+          max_guests,
+          destination:destinations(name, country, state_province),
+          property_images(image_url, is_primary)
         `)
         .eq('is_active', true)
         .limit(8);
@@ -51,15 +59,13 @@ const FeaturedListings = () => {
   if (loading) {
     return (
       <section className="py-16 px-4 max-w-7xl mx-auto">
-        <h2 className="text-3xl font-semibold text-gray-900 mb-8">Featured stays</h2>
+        <h2 className="text-3xl font-semibold text-gray-900 mb-8">Featured listings</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {Array(8).fill(0).map((_, index) => (
-            <div key={index} className="animate-pulse">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="animate-pulse">
               <div className="bg-gray-300 h-64 rounded-xl mb-3"></div>
-              <div className="space-y-2">
-                <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-300 rounded w-1/2"></div>
-              </div>
+              <div className="h-4 bg-gray-300 rounded mb-2"></div>
+              <div className="h-4 bg-gray-300 rounded w-3/4"></div>
             </div>
           ))}
         </div>
@@ -67,83 +73,15 @@ const FeaturedListings = () => {
     );
   }
 
-  // If no properties from database, show sample data
-  const sampleProperties = [
-    {
-      id: 'sample-1',
-      title: 'Oceanfront Villa in Malibu',
-      property_type: 'Villa',
-      price_per_night: 850,
-      address: 'Malibu, California',
-      property_images: [{ image_url: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop', is_primary: true }]
-    },
-    {
-      id: 'sample-2',
-      title: 'Mountain Chalet in Aspen',
-      property_type: 'Chalet',
-      price_per_night: 1200,
-      address: 'Aspen, Colorado',
-      property_images: [{ image_url: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400&h=300&fit=crop', is_primary: true }]
-    },
-    {
-      id: 'sample-3',
-      title: 'Wine Country Estate',
-      property_type: 'Estate',
-      price_per_night: 950,
-      address: 'Napa Valley, California',
-      property_images: [{ image_url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=300&fit=crop', is_primary: true }]
-    },
-    {
-      id: 'sample-4',
-      title: 'Tropical Paradise Villa',
-      property_type: 'Villa',
-      price_per_night: 750,
-      address: 'Key West, Florida',
-      property_images: [{ image_url: 'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=400&h=300&fit=crop', is_primary: true }]
-    },
-    {
-      id: 'sample-5',
-      title: 'Cliffside Retreat',
-      property_type: 'House',
-      price_per_night: 680,
-      address: 'Big Sur, California',
-      property_images: [{ image_url: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=400&h=300&fit=crop', is_primary: true }]
-    },
-    {
-      id: 'sample-6',
-      title: 'Modern Beach House',
-      property_type: 'House',
-      price_per_night: 890,
-      address: 'Santa Monica, California',
-      property_images: [{ image_url: 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=400&h=300&fit=crop', is_primary: true }]
-    },
-    {
-      id: 'sample-7',
-      title: 'Desert Oasis Villa',
-      property_type: 'Villa',
-      price_per_night: 720,
-      address: 'Scottsdale, Arizona',
-      property_images: [{ image_url: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&h=300&fit=crop', is_primary: true }]
-    },
-    {
-      id: 'sample-8',
-      title: 'Lakefront Cabin',
-      property_type: 'Cabin',
-      price_per_night: 450,
-      address: 'Lake Tahoe, California',
-      property_images: [{ image_url: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=300&fit=crop', is_primary: true }]
-    }
-  ];
-
-  const displayProperties = properties.length > 0 ? properties : sampleProperties;
-
   return (
     <section className="py-16 px-4 max-w-7xl mx-auto">
-      <h2 className="text-3xl font-semibold text-gray-900 mb-8">Featured stays</h2>
+      <h2 className="text-3xl font-semibold text-gray-900 mb-8">Featured listings</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {displayProperties.map((property) => {
+        {properties.map((property) => {
           const primaryImage = property.property_images?.find(img => img.is_primary) || property.property_images?.[0];
-          
+          const imageUrl = primaryImage?.image_url || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&h=600&fit=crop';
+          const location = property.destination ? `${property.destination.name}, ${property.destination.state_province}` : 'Location';
+
           return (
             <Link 
               key={property.id}
@@ -152,25 +90,27 @@ const FeaturedListings = () => {
             >
               <div className="relative">
                 <img 
-                  src={primaryImage?.image_url || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop'}
+                  src={imageUrl}
                   alt={property.title}
                   className="w-full h-64 object-cover rounded-xl group-hover:shadow-lg transition-shadow duration-300"
                 />
                 <button className="absolute top-3 right-3 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center transition-colors">
-                  <Heart className="w-4 h-4" />
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
                 </button>
               </div>
 
               <div className="mt-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-600">{property.address}</p>
+                  <p className="text-sm text-gray-600">{location}</p>
                   <div className="flex items-center space-x-1">
                     <Star className="h-4 w-4 text-yellow-400 fill-current" />
                     <span className="text-sm text-gray-900">4.8</span>
                   </div>
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 mt-1">{property.title}</h3>
-                <p className="text-sm text-gray-600">{property.property_type}</p>
+                <p className="text-sm text-gray-600">{property.bedrooms} bed · {property.bathrooms} bath · {property.max_guests} guests</p>
                 <p className="text-lg font-semibold text-gray-900 mt-1">
                   ${property.price_per_night} <span className="text-sm font-normal text-gray-600">night</span>
                 </p>
