@@ -1,8 +1,9 @@
 
-import { useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { scrollToTop } from '@/utils/scrollToTop';
 import { useBookingState } from '@/hooks/useBookingState';
 import { useBookingForm } from '@/hooks/useBookingForm';
@@ -12,8 +13,11 @@ import BookingContent from '@/components/booking/BookingContent';
 const Booking = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const params = useParams();
   const { user } = useAuth();
+  const { toast } = useToast();
   const { bookingState, updateBookingState } = useBookingState();
+  const [propertyLoading, setPropertyLoading] = useState(false);
   const {
     loading,
     specialRequests,
@@ -38,12 +42,55 @@ const Booking = () => {
         totalAmount: routeState.totalAmount
       });
     } else if (!bookingState.property) {
-      navigate('/');
-      return;
+      // Try to fetch property if we have a property ID in URL params
+      const propertyId = params.propertyId || new URLSearchParams(location.search).get('property');
+      if (propertyId) {
+        fetchProperty(propertyId);
+      } else {
+        navigate('/');
+        return;
+      }
     }
     
     scrollToTop();
   }, [location.state]);
+
+  const fetchProperty = async (propertyId: string) => {
+    setPropertyLoading(true);
+    try {
+      const { data: propertyData, error: propertyError } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('id', propertyId)
+        .single();
+
+      if (propertyError) throw propertyError;
+
+      if (propertyData) {
+        // Set default booking values if not already set
+        const checkIn = bookingState.checkIn || new Date();
+        const checkOut = bookingState.checkOut || new Date(Date.now() + 24 * 60 * 60 * 1000);
+        const guests = bookingState.guests || 2;
+        
+        updateBookingState({
+          property: propertyData,
+          checkIn,
+          checkOut,
+          guests
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching property:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not load property details. Please try again.',
+        variant: 'destructive',
+      });
+      navigate('/');
+    } finally {
+      setPropertyLoading(false);
+    }
+  };
 
   // Load default payment method if user is logged in
   useEffect(() => {
@@ -74,11 +121,21 @@ const Booking = () => {
     }
   };
 
-  if (!bookingState.property || !bookingState.checkIn || !bookingState.checkOut) {
+  if (propertyLoading) {
     return (
       <BookingLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Loading booking details...</div>
+          <div className="text-lg">Loading property details...</div>
+        </div>
+      </BookingLayout>
+    );
+  }
+
+  if (!bookingState.property) {
+    return (
+      <BookingLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Property not found</div>
         </div>
       </BookingLayout>
     );

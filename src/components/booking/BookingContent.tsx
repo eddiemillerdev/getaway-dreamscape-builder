@@ -56,22 +56,17 @@ const BookingContent = ({
     );
   }
 
-  // Early return if required booking data is missing
-  if (!bookingState.checkIn || !bookingState.checkOut) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading booking details...</div>
-      </div>
-    );
-  }
+  // Set default dates if they're missing
+  const checkIn = bookingState.checkIn || new Date();
+  const checkOut = bookingState.checkOut || new Date(Date.now() + 24 * 60 * 60 * 1000);
 
   return (
     <>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <TripDetails
-            checkIn={bookingState.checkIn}
-            checkOut={bookingState.checkOut}
+            checkIn={checkIn}
+            checkOut={checkOut}
             guests={bookingState.guests}
             onEdit={() => setEditModalOpen(true)}
           />
@@ -97,7 +92,7 @@ const BookingContent = ({
         <div className="space-y-6">
           <BookingSummary
             property={bookingState.property}
-            nights={bookingState.nights}
+            nights={bookingState.nights || 1}
             totalAmount={bookingState.totalAmount}
             onConfirmBooking={onConfirmBooking}
             loading={loading}
@@ -108,8 +103,8 @@ const BookingContent = ({
       <EditBookingModal
         open={editModalOpen}
         onClose={() => setEditModalOpen(false)}
-        initialCheckIn={bookingState.checkIn}
-        initialCheckOut={bookingState.checkOut}
+        initialCheckIn={checkIn}
+        initialCheckOut={checkOut}
         initialGuests={bookingState.guests}
         maxGuests={bookingState.property?.max_guests || 8}
         onSave={handleEditBooking}
