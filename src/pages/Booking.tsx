@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { scrollToTopImmediate } from '@/utils/scrollToTop';
 import { useBookingState } from '@/hooks/useBookingState';
 import { useBookingForm } from '@/hooks/useBookingForm';
+import { secureLog } from '@/utils/security';
 import BookingLayout from '@/components/booking/BookingLayout';
 import BookingContent from '@/components/booking/BookingContent';
 
@@ -38,17 +39,14 @@ const Booking = () => {
   // Initialize booking state from route or fetch property
   useEffect(() => {
     const initializeBooking = async () => {
-      console.log('Initializing booking...');
-      console.log('Location state:', location.state);
-      console.log('Params:', params);
-      console.log('Current booking state:', bookingState);
+      secureLog.info('Initializing booking...');
       
       const routeState = location.state;
       const propertyId = params.id;
       
       // If we have route state with property, use it
       if (routeState?.property) {
-        console.log('Using route state property:', routeState.property);
+        secureLog.info('Using route state property');
         const checkIn = routeState.checkIn ? new Date(routeState.checkIn) : new Date();
         const checkOut = routeState.checkOut ? new Date(routeState.checkOut) : new Date(Date.now() + 24 * 60 * 60 * 1000);
         const guests = routeState.guests || 2;
@@ -69,20 +67,20 @@ const Booking = () => {
       
       // If we already have a property in state, we're good
       if (bookingState.property) {
-        console.log('Using existing property from state:', bookingState.property);
+        secureLog.info('Using existing property from state');
         setIsInitialized(true);
         return;
       }
       
       // If we have a property ID but no property, fetch it
       if (propertyId) {
-        console.log('Fetching property with ID:', propertyId);
+        secureLog.info('Fetching property with ID:', propertyId);
         await fetchProperty(propertyId);
         return;
       }
       
       // No property ID and no state, redirect to home
-      console.log('No property found, redirecting to home');
+      secureLog.warn('No property found, redirecting to home');
       toast({
         title: 'Property Not Found',
         description: 'Please select a property to book.',
@@ -99,7 +97,7 @@ const Booking = () => {
   const fetchProperty = async (propertyId: string) => {
     setPropertyLoading(true);
     try {
-      console.log('Fetching property data for ID:', propertyId);
+      secureLog.info('Fetching property data for ID:', propertyId);
       const { data: propertyData, error } = await supabase
         .from('properties')
         .select(`
@@ -112,7 +110,7 @@ const Booking = () => {
         .single();
 
       if (error) {
-        console.error('Property fetch error:', error);
+        secureLog.error('Property fetch error:', error);
         throw error;
       }
 
@@ -120,7 +118,7 @@ const Booking = () => {
         throw new Error('Property not found');
       }
 
-      console.log('Property fetched successfully:', propertyData);
+      secureLog.info('Property fetched successfully');
       
       // Set default booking values
       const checkIn = new Date();
@@ -142,7 +140,7 @@ const Booking = () => {
       
       setIsInitialized(true);
     } catch (error: any) {
-      console.error('Error fetching property:', error);
+      secureLog.error('Error fetching property:', error);
       toast({
         title: 'Error',
         description: 'Could not load property details. Please try again.',
@@ -177,9 +175,10 @@ const Booking = () => {
           name: data.cardholder_name,
           brand: data.card_brand
         });
+        secureLog.info('Default payment method loaded');
       }
     } catch (error) {
-      console.log('No default payment method found');
+      secureLog.info('No default payment method found');
     }
   };
 

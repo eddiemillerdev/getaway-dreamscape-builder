@@ -7,6 +7,7 @@ import { DateRange } from 'react-day-picker';
 import DateRangePicker from '@/components/booking/DateRangePicker';
 import GuestCounter from '@/components/booking/GuestCounter';
 import PricingBreakdown from '@/components/booking/PricingBreakdown';
+import { secureLog } from '@/utils/security';
 
 interface Property {
   id: string;
@@ -68,14 +69,7 @@ const BookingCard = ({ property }: BookingCardProps) => {
       return;
     }
 
-    console.log('Navigating to booking with property:', property);
-    console.log('Booking details:', {
-      checkIn: dateRange.from,
-      checkOut: dateRange.to,
-      guests: totalGuests,
-      nights: totalNights,
-      totalAmount: total
-    });
+    secureLog.info('Navigating to booking with property');
 
     navigate(`/booking/${property.id}`, {
       state: {

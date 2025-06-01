@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
+import { sanitizeInput, sanitizeEmail, sanitizePhone } from '@/utils/security';
 
 interface GuestDetails {
   firstName: string;
@@ -25,22 +26,34 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
 
   useEffect(() => {
     if (user && user.user_metadata) {
-      console.log('User metadata:', user.user_metadata);
-      console.log('User email:', user.email);
-      
       setGuestDetails({
         ...guestDetails,
-        firstName: user.user_metadata.first_name || '',
-        lastName: user.user_metadata.last_name || '',
+        firstName: sanitizeInput(user.user_metadata.first_name || ''),
+        lastName: sanitizeInput(user.user_metadata.last_name || ''),
         email: user.email || '',
       });
     }
   }, [user]);
 
   const handleInputChange = (field: keyof GuestDetails, value: string) => {
+    let sanitizedValue = value;
+    
+    // Apply appropriate sanitization based on field type
+    switch (field) {
+      case 'email':
+        sanitizedValue = sanitizeEmail(value);
+        break;
+      case 'phone':
+        sanitizedValue = sanitizePhone(value);
+        break;
+      default:
+        sanitizedValue = sanitizeInput(value);
+        break;
+    }
+
     setGuestDetails({
       ...guestDetails,
-      [field]: value
+      [field]: sanitizedValue
     });
   };
 
@@ -64,6 +77,7 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
               value={guestDetails.firstName}
               onChange={(e) => handleInputChange('firstName', e.target.value)}
               placeholder="John"
+              maxLength={50}
             />
             <div id="firstName-error" className="text-sm text-red-500 mt-1 hidden">First name is required</div>
           </div>
@@ -74,6 +88,7 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
               value={guestDetails.lastName}
               onChange={(e) => handleInputChange('lastName', e.target.value)}
               placeholder="Doe"
+              maxLength={50}
             />
             <div id="lastName-error" className="text-sm text-red-500 mt-1 hidden">Last name is required</div>
           </div>
@@ -87,6 +102,7 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
               value={guestDetails.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
               placeholder="john@example.com"
+              maxLength={100}
             />
             <div id="email-error" className="text-sm text-red-500 mt-1 hidden">Valid email is required</div>
           </div>
@@ -100,6 +116,8 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
               value={guestDetails.password || ''}
               onChange={(e) => handleInputChange('password', e.target.value)}
               placeholder="Enter a password for your account"
+              minLength={8}
+              maxLength={100}
             />
             <div id="password-error" className="text-sm text-red-500 mt-1 hidden">Password is required</div>
             <p className="text-xs text-gray-500 mt-1">
@@ -114,6 +132,7 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
             value={guestDetails.phone}
             onChange={(e) => handleInputChange('phone', e.target.value)}
             placeholder="+1 (555) 123-4567"
+            maxLength={20}
           />
         </div>
         <div>
@@ -123,6 +142,7 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
             value={guestDetails.address}
             onChange={(e) => handleInputChange('address', e.target.value)}
             placeholder="123 Main St, City, State"
+            maxLength={200}
           />
         </div>
       </CardContent>

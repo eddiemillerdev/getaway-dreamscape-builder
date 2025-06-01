@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { isDevelopment } from '@/utils/security';
 
 interface AuthFormProps {
   onSuccess?: () => void;
@@ -140,14 +141,16 @@ const AuthForm = ({ onSuccess }: AuthFormProps) => {
           </button>
         </div>
 
-        {/* Demo credentials hint */}
-        <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-          <p className="text-xs text-blue-700 text-center">
-            <strong>Demo Account:</strong><br />
-            Email: demo@luxebysea.com<br />
-            Password: demo123456
-          </p>
-        </div>
+        {/* Demo credentials only in development */}
+        {isDevelopment() && (
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+            <p className="text-xs text-blue-700 text-center">
+              <strong>Demo Account:</strong><br />
+              Email: demo@luxebysea.com<br />
+              Password: demo123456
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

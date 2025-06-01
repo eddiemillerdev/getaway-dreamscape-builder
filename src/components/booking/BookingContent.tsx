@@ -9,6 +9,7 @@ import BookingSummary from '@/components/booking/BookingSummary';
 import EditBookingModal from '@/components/EditBookingModal';
 import PaymentMethodModal from '@/components/PaymentMethodModal';
 import { useBookingState } from '@/hooks/useBookingState';
+import { secureLog } from '@/utils/security';
 
 interface BookingContentProps {
   loading: boolean;
@@ -49,7 +50,7 @@ const BookingContent = ({
 
   // Safety check - ensure we have property and required data
   if (!bookingState.property) {
-    console.error('BookingContent rendered without property');
+    secureLog.error('BookingContent rendered without property');
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-lg">Error: Property data missing</div>
@@ -64,14 +65,7 @@ const BookingContent = ({
   const totalAmount = bookingState.totalAmount || 0;
   const guests = bookingState.guests || 2;
 
-  console.log('BookingContent rendering with:', {
-    property: bookingState.property,
-    checkIn,
-    checkOut,
-    nights,
-    totalAmount,
-    guests
-  });
+  secureLog.info('BookingContent rendering with valid data');
 
   return (
     <>

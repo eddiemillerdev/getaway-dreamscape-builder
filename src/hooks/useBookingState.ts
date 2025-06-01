@@ -1,6 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { differenceInDays } from 'date-fns';
+import { secureStorage } from '@/utils/secureStorage';
+import { secureLog } from '@/utils/security';
 
 interface BookingState {
   checkIn: Date | null;
@@ -23,26 +25,27 @@ export const useBookingState = () => {
     totalAmount: 0
   });
 
-  // Load state from localStorage on mount
+  // Load state from secure storage on mount
   useEffect(() => {
-    const savedState = localStorage.getItem(STORAGE_KEY);
+    const savedState = secureStorage.getItem(STORAGE_KEY);
     if (savedState) {
       try {
-        const parsed = JSON.parse(savedState);
         setBookingState({
-          ...parsed,
-          checkIn: parsed.checkIn ? new Date(parsed.checkIn) : null,
-          checkOut: parsed.checkOut ? new Date(parsed.checkOut) : null,
+          ...savedState,
+          checkIn: savedState.checkIn ? new Date(savedState.checkIn) : null,
+          checkOut: savedState.checkOut ? new Date(savedState.checkOut) : null,
         });
+        secureLog.info('Booking state loaded from secure storage');
       } catch (error) {
-        console.error('Error parsing saved booking state:', error);
+        secureLog.error('Error parsing saved booking state:', error);
+        secureStorage.removeItem(STORAGE_KEY);
       }
     }
   }, []);
 
-  // Save state to localStorage whenever it changes
+  // Save state to secure storage whenever it changes
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(bookingState));
+    secureStorage.setItem(STORAGE_KEY, bookingState);
   }, [bookingState]);
 
   const updateBookingState = (updates: Partial<BookingState>) => {
@@ -74,7 +77,8 @@ export const useBookingState = () => {
       nights: 0,
       totalAmount: 0
     });
-    localStorage.removeItem(STORAGE_KEY);
+    secureStorage.removeItem(STORAGE_KEY);
+    secureLog.info('Booking state cleared');
   };
 
   return {

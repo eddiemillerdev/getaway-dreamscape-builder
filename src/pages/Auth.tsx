@@ -159,14 +159,16 @@ const Auth = () => {
               </button>
             </div>
 
-            {/* Demo credentials hint */}
-            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-              <p className="text-xs text-blue-700 text-center">
-                <strong>Demo Account:</strong><br />
-                Email: demo@luxebysea.com<br />
-                Password: demo123456
-              </p>
-            </div>
+            {/* Demo credentials only in development */}
+            {isDevelopment() && (
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                <p className="text-xs text-blue-700 text-center">
+                  <strong>Demo Account:</strong><br />
+                  Email: demo@luxebysea.com<br />
+                  Password: demo123456
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
