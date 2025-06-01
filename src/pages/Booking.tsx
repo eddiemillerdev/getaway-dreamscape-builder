@@ -93,10 +93,20 @@ const Booking = () => {
       return;
     }
 
-    if (!guestDetails.firstName || !guestDetails.lastName || !guestDetails.email) {
+    if (!guestDetails.firstName || !guestDetails.lastName) {
       toast({
         title: 'Guest Details Required',
         description: 'Please fill in all required guest details.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Only check email for non-authenticated users
+    if (!user && !guestDetails.email) {
+      toast({
+        title: 'Email Required',
+        description: 'Please provide your email address.',
         variant: 'destructive',
       });
       return;

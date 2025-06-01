@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -53,7 +54,6 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
               value={guestDetails.firstName}
               onChange={(e) => setGuestDetails({...guestDetails, firstName: e.target.value})}
               placeholder="John"
-              disabled={!!user}
             />
           </div>
           <div>
@@ -63,21 +63,21 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
               value={guestDetails.lastName}
               onChange={(e) => setGuestDetails({...guestDetails, lastName: e.target.value})}
               placeholder="Doe"
-              disabled={!!user}
             />
           </div>
         </div>
-        <div>
-          <Label htmlFor="email">Email *</Label>
-          <Input
-            id="email"
-            type="email"
-            value={guestDetails.email}
-            onChange={(e) => setGuestDetails({...guestDetails, email: e.target.value})}
-            placeholder="john@example.com"
-            disabled={!!user}
-          />
-        </div>
+        {!user && (
+          <div>
+            <Label htmlFor="email">Email *</Label>
+            <Input
+              id="email"
+              type="email"
+              value={guestDetails.email}
+              onChange={(e) => setGuestDetails({...guestDetails, email: e.target.value})}
+              placeholder="john@example.com"
+            />
+          </div>
+        )}
         {!user && (
           <div>
             <Label htmlFor="password">Password *</Label>
