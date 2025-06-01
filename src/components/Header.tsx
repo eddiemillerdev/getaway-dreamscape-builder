@@ -47,6 +47,12 @@ const Header = () => {
   };
 
   const isActivePage = (path: string) => {
+    if (path === '/homes') {
+      return location.pathname === '/homes' || 
+             location.pathname.startsWith('/home/') || 
+             location.pathname === '/booking' || 
+             location.pathname === '/booking-success';
+    }
     return location.pathname === path;
   };
 
@@ -56,53 +62,53 @@ const Header = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" onClick={scrollToTop} className="flex items-center">
-            <div className="w-8 h-8 bg-rose-500 rounded flex items-center justify-center mr-3">
+            <div className="w-8 h-8 bg-teal-500 rounded flex items-center justify-center mr-3">
               <span className="text-white font-bold text-sm">L</span>
             </div>
-            <span className="font-bold text-xl text-gray-900 tracking-tight">
-              LUXEBYSEA
+            <span className="font-bold text-2xl text-gray-900 tracking-tight">
+              luxebysea
             </span>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <button
-              onClick={() => handleNavigation('/villas')}
+              onClick={() => handleNavigation('/homes')}
               className={`font-medium relative pb-2 transition-colors ${
-                isActivePage('/villas')
-                  ? 'text-rose-500'
+                isActivePage('/homes')
+                  ? 'text-teal-500'
                   : 'text-gray-700 hover:text-gray-900'
               }`}
             >
-              Villas
-              {isActivePage('/villas') && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-rose-500 rounded-full" />
+              Homes
+              {isActivePage('/homes') && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-teal-500 rounded-full" />
               )}
             </button>
             <button
               onClick={() => handleNavigation('/destinations')}
               className={`font-medium relative pb-2 transition-colors ${
                 isActivePage('/destinations')
-                  ? 'text-rose-500'
+                  ? 'text-teal-500'
                   : 'text-gray-700 hover:text-gray-900'
               }`}
             >
               Destinations
               {isActivePage('/destinations') && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-rose-500 rounded-full" />
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-teal-500 rounded-full" />
               )}
             </button>
             <button
               onClick={() => handleNavigation('/experiences')}
               className={`font-medium relative pb-2 transition-colors ${
                 isActivePage('/experiences')
-                  ? 'text-rose-500'
+                  ? 'text-teal-500'
                   : 'text-gray-700 hover:text-gray-900'
               }`}
             >
               Experiences
               {isActivePage('/experiences') && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-rose-500 rounded-full" />
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-teal-500 rounded-full" />
               )}
             </button>
           </nav>
@@ -174,20 +180,20 @@ const Header = () => {
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t">
               <button
-                onClick={() => handleNavigation('/villas')}
+                onClick={() => handleNavigation('/homes')}
                 className={`block w-full text-left px-3 py-2 ${
-                  isActivePage('/villas')
-                    ? 'text-rose-500 font-medium'
+                  isActivePage('/homes')
+                    ? 'text-teal-500 font-medium'
                     : 'text-gray-700 hover:text-gray-900'
                 }`}
               >
-                Villas
+                Homes
               </button>
               <button
                 onClick={() => handleNavigation('/destinations')}
                 className={`block w-full text-left px-3 py-2 ${
                   isActivePage('/destinations')
-                    ? 'text-rose-500 font-medium'
+                    ? 'text-teal-500 font-medium'
                     : 'text-gray-700 hover:text-gray-900'
                 }`}
               >
@@ -197,7 +203,7 @@ const Header = () => {
                 onClick={() => handleNavigation('/experiences')}
                 className={`block w-full text-left px-3 py-2 ${
                   isActivePage('/experiences')
-                    ? 'text-rose-500 font-medium'
+                    ? 'text-teal-500 font-medium'
                     : 'text-gray-700 hover:text-gray-900'
                 }`}
               >

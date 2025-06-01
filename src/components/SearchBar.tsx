@@ -68,13 +68,14 @@ const SearchBar = ({ onSearch, compact = false }: SearchBarProps) => {
     : "bg-white rounded-full shadow-xl border border-gray-200 p-2 flex items-center max-w-4xl mx-auto";
 
   const inputPadding = compact ? "px-3 py-2" : "px-4 py-3";
+  const iconSize = "h-6 w-6"; // Made icons larger
 
   return (
     <div className={containerClasses}>
       {/* Destination */}
       <div className="flex-1 relative">
         <div className={`flex items-center ${inputPadding}`}>
-          <MapPin className="h-5 w-5 text-gray-400 mr-3" />
+          <MapPin className={`${iconSize} text-gray-400 mr-3`} />
           <div className="flex-1">
             {!compact && <label className="text-xs font-medium text-gray-700 block">Where</label>}
             <Input
@@ -119,7 +120,7 @@ const SearchBar = ({ onSearch, compact = false }: SearchBarProps) => {
         <Popover>
           <PopoverTrigger asChild>
             <button className={`flex items-center ${inputPadding} w-full text-left`}>
-              <Calendar className="h-5 w-5 text-gray-400 mr-3" />
+              <Calendar className={`${iconSize} text-gray-400 mr-3`} />
               <div className="flex-1">
                 {!compact && <label className="text-xs font-medium text-gray-700 block">When</label>}
                 <span className="text-sm font-medium text-gray-900">
@@ -156,7 +157,7 @@ const SearchBar = ({ onSearch, compact = false }: SearchBarProps) => {
         <Popover>
           <PopoverTrigger asChild>
             <button className={`flex items-center ${inputPadding} w-full text-left`}>
-              <Users className="h-5 w-5 text-gray-400 mr-3" />
+              <Users className={`${iconSize} text-gray-400 mr-3`} />
               <div className="flex-1">
                 {!compact && <label className="text-xs font-medium text-gray-700 block">Who</label>}
                 <span className="text-sm font-medium text-gray-900">
@@ -259,9 +260,9 @@ const SearchBar = ({ onSearch, compact = false }: SearchBarProps) => {
       {/* Search Button */}
       <Button 
         onClick={handleSearch}
-        className={`bg-rose-500 hover:bg-rose-600 text-white rounded-full ${compact ? 'p-2 ml-1' : 'p-3 ml-2'}`}
+        className={`bg-teal-500 hover:bg-teal-600 text-white rounded-full ${compact ? 'p-2 ml-1' : 'p-3 ml-2'}`}
       >
-        <Search className="h-5 w-5" />
+        <Search className={iconSize} />
       </Button>
     </div>
   );

@@ -25,6 +25,9 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
 
   useEffect(() => {
     if (user && user.user_metadata) {
+      console.log('User metadata:', user.user_metadata);
+      console.log('User email:', user.email);
+      
       setGuestDetails({
         ...guestDetails,
         firstName: user.user_metadata.first_name || '',
@@ -32,10 +35,17 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
         email: user.email || '',
       });
     }
-  }, [user, setGuestDetails]);
+  }, [user]);
+
+  const handleInputChange = (field: keyof GuestDetails, value: string) => {
+    setGuestDetails({
+      ...guestDetails,
+      [field]: value
+    });
+  };
 
   return (
-    <Card>
+    <Card id="guest-details">
       <CardHeader>
         <CardTitle>Guest details</CardTitle>
         <CardDescription>
@@ -52,18 +62,20 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
             <Input
               id="firstName"
               value={guestDetails.firstName}
-              onChange={(e) => setGuestDetails({...guestDetails, firstName: e.target.value})}
+              onChange={(e) => handleInputChange('firstName', e.target.value)}
               placeholder="John"
             />
+            <div id="firstName-error" className="text-sm text-red-500 mt-1 hidden">First name is required</div>
           </div>
           <div>
             <Label htmlFor="lastName">Last Name *</Label>
             <Input
               id="lastName"
               value={guestDetails.lastName}
-              onChange={(e) => setGuestDetails({...guestDetails, lastName: e.target.value})}
+              onChange={(e) => handleInputChange('lastName', e.target.value)}
               placeholder="Doe"
             />
+            <div id="lastName-error" className="text-sm text-red-500 mt-1 hidden">Last name is required</div>
           </div>
         </div>
         {!user && (
@@ -73,9 +85,10 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
               id="email"
               type="email"
               value={guestDetails.email}
-              onChange={(e) => setGuestDetails({...guestDetails, email: e.target.value})}
+              onChange={(e) => handleInputChange('email', e.target.value)}
               placeholder="john@example.com"
             />
+            <div id="email-error" className="text-sm text-red-500 mt-1 hidden">Valid email is required</div>
           </div>
         )}
         {!user && (
@@ -85,9 +98,10 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
               id="password"
               type="password"
               value={guestDetails.password || ''}
-              onChange={(e) => setGuestDetails({...guestDetails, password: e.target.value})}
+              onChange={(e) => handleInputChange('password', e.target.value)}
               placeholder="Enter a password for your account"
             />
+            <div id="password-error" className="text-sm text-red-500 mt-1 hidden">Password is required</div>
             <p className="text-xs text-gray-500 mt-1">
               We'll create an account for you to manage your bookings
             </p>
@@ -98,7 +112,7 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
           <Input
             id="phone"
             value={guestDetails.phone}
-            onChange={(e) => setGuestDetails({...guestDetails, phone: e.target.value})}
+            onChange={(e) => handleInputChange('phone', e.target.value)}
             placeholder="+1 (555) 123-4567"
           />
         </div>
@@ -107,7 +121,7 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
           <Input
             id="address"
             value={guestDetails.address}
-            onChange={(e) => setGuestDetails({...guestDetails, address: e.target.value})}
+            onChange={(e) => handleInputChange('address', e.target.value)}
             placeholder="123 Main St, City, State"
           />
         </div>

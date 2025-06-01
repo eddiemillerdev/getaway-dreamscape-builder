@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import Villas from "./pages/Villas";
+import Homes from "./pages/Homes";
 import Destinations from "./pages/Destinations";
 import Destination from "./pages/Destination";
 import ExperiencesPage from "./pages/ExperiencesPage";
@@ -30,11 +30,13 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/villas" element={<Villas />} />
+            <Route path="/homes" element={<Homes />} />
+            <Route path="/villas" element={<Homes />} /> {/* Redirect old route */}
             <Route path="/destinations" element={<Destinations />} />
             <Route path="/destination/:id" element={<Destination />} />
             <Route path="/experiences" element={<ExperiencesPage />} />
-            <Route path="/property/:id" element={<Property />} />
+            <Route path="/home/:id" element={<Property />} />
+            <Route path="/property/:id" element={<Property />} /> {/* Redirect old route */}
             <Route path="/experience/:id" element={<Experience />} />
             <Route path="/booking" element={<Booking />} />
             <Route path="/booking-success" element={<BookingSuccess />} />

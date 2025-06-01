@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { scrollToTop } from '@/utils/scrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BookingHeader from '@/components/booking/BookingHeader';
@@ -57,10 +58,36 @@ const Booking = () => {
     totalAmount: initialState.totalAmount
   });
 
+  // Scroll to top when component mounts
+  useState(() => {
+    scrollToTop();
+  });
+
   if (!bookingData.property || !bookingData.checkIn || !bookingData.checkOut) {
     navigate('/');
     return null;
   }
+
+  const scrollToError = (elementId: string, errorId: string, message: string) => {
+    const element = document.getElementById(elementId);
+    const errorElement = document.getElementById(errorId);
+    
+    if (element && errorElement) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      errorElement.textContent = message;
+      errorElement.classList.remove('hidden');
+      
+      // Hide error after 5 seconds
+      setTimeout(() => {
+        errorElement.classList.add('hidden');
+      }, 5000);
+    }
+  };
+
+  const hideAllErrors = () => {
+    const errorElements = document.querySelectorAll('[id$="-error"]');
+    errorElements.forEach(el => el.classList.add('hidden'));
+  };
 
   const handleEditBooking = (checkIn: Date, checkOut: Date, guests: number) => {
     const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
@@ -84,6 +111,8 @@ const Booking = () => {
   };
 
   const handleBooking = async () => {
+    hideAllErrors();
+    
     if (!paymentMethod) {
       toast({
         title: 'Payment Method Required',
@@ -93,7 +122,18 @@ const Booking = () => {
       return;
     }
 
-    if (!guestDetails.firstName || !guestDetails.lastName) {
+    if (!guestDetails.firstName) {
+      scrollToError('guest-details', 'firstName-error', 'First name is required');
+      toast({
+        title: 'Guest Details Required',
+        description: 'Please fill in all required guest details.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!guestDetails.lastName) {
+      scrollToError('guest-details', 'lastName-error', 'Last name is required');
       toast({
         title: 'Guest Details Required',
         description: 'Please fill in all required guest details.',
@@ -104,6 +144,7 @@ const Booking = () => {
 
     // Only check email for non-authenticated users
     if (!user && !guestDetails.email) {
+      scrollToError('guest-details', 'email-error', 'Valid email is required');
       toast({
         title: 'Email Required',
         description: 'Please provide your email address.',
@@ -113,6 +154,7 @@ const Booking = () => {
     }
 
     if (!user && !guestDetails.password) {
+      scrollToError('guest-details', 'password-error', 'Password is required');
       toast({
         title: 'Password Required',
         description: 'Please enter a password to create your account.',
@@ -136,7 +178,24 @@ const Booking = () => {
         );
 
         if (signUpError) {
-          throw new Error(signUpError.message);
+          console.error('Sign up error:', signUpError);
+          
+          // Handle specific error cases
+          if (signUpError.message.includes('User already registered')) {
+            scrollToError('guest-details', 'email-error', 'An account with this email already exists. Please sign in instead.');
+            toast({
+              title: 'Email Already Registered',
+              description: 'An account with this email already exists. Please sign in to continue.',
+              variant: 'destructive',
+            });
+          } else {
+            toast({
+              title: 'Account Creation Failed',
+              description: signUpError.message || 'Failed to create account. Please try again.',
+              variant: 'destructive',
+            });
+          }
+          return;
         }
 
         // Get the newly created user
