@@ -27,25 +27,37 @@ export const useBookingState = () => {
 
   // Load state from secure storage on mount
   useEffect(() => {
-    const savedState = secureStorage.getItem(STORAGE_KEY);
-    if (savedState) {
+    const loadSavedState = async () => {
       try {
-        setBookingState({
-          ...savedState,
-          checkIn: savedState.checkIn ? new Date(savedState.checkIn) : null,
-          checkOut: savedState.checkOut ? new Date(savedState.checkOut) : null,
-        });
-        secureLog.info('Booking state loaded from secure storage');
+        const savedState = await secureStorage.getItem(STORAGE_KEY);
+        if (savedState) {
+          setBookingState({
+            ...savedState,
+            checkIn: savedState.checkIn ? new Date(savedState.checkIn) : null,
+            checkOut: savedState.checkOut ? new Date(savedState.checkOut) : null,
+          });
+          secureLog.info('Booking state loaded from secure storage');
+        }
       } catch (error) {
         secureLog.error('Error parsing saved booking state:', error);
-        secureStorage.removeItem(STORAGE_KEY);
+        await secureStorage.removeItem(STORAGE_KEY);
       }
-    }
+    };
+
+    loadSavedState();
   }, []);
 
   // Save state to secure storage whenever it changes
   useEffect(() => {
-    secureStorage.setItem(STORAGE_KEY, bookingState);
+    const saveState = async () => {
+      try {
+        await secureStorage.setItem(STORAGE_KEY, bookingState);
+      } catch (error) {
+        secureLog.error('Error saving booking state:', error);
+      }
+    };
+
+    saveState();
   }, [bookingState]);
 
   const updateBookingState = (updates: Partial<BookingState>) => {
@@ -68,7 +80,7 @@ export const useBookingState = () => {
     });
   };
 
-  const clearBookingState = () => {
+  const clearBookingState = async () => {
     setBookingState({
       checkIn: null,
       checkOut: null,
@@ -77,7 +89,7 @@ export const useBookingState = () => {
       nights: 0,
       totalAmount: 0
     });
-    secureStorage.removeItem(STORAGE_KEY);
+    await secureStorage.removeItem(STORAGE_KEY);
     secureLog.info('Booking state cleared');
   };
 
