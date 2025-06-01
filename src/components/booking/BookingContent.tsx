@@ -47,6 +47,15 @@ const BookingContent = ({
     setPaymentMethod(paymentData);
   };
 
+  // Early return if property is not available
+  if (!bookingState.property) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Loading property details...</div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -93,7 +102,7 @@ const BookingContent = ({
         initialCheckIn={bookingState.checkIn!}
         initialCheckOut={bookingState.checkOut!}
         initialGuests={bookingState.guests}
-        maxGuests={bookingState.property.max_guests}
+        maxGuests={bookingState.property.max_guests || 8}
         onSave={handleEditBooking}
       />
 

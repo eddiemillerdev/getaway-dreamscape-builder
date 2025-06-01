@@ -134,6 +134,9 @@ const Header = () => {
                   <DropdownMenuItem onClick={() => handleNavigation('/dashboard')}>
                     My Trips
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleNavigation('/messages')}>
+                    Messages
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleNavigation('/dashboard')}>
                     My Profile
                   </DropdownMenuItem>
@@ -216,6 +219,12 @@ const Header = () => {
                     className="block w-full text-left px-3 py-2 text-gray-700 hover:text-gray-900"
                   >
                     Dashboard
+                  </button>
+                  <button
+                    onClick={() => handleNavigation('/messages')}
+                    className="block w-full text-left px-3 py-2 text-gray-700 hover:text-gray-900"
+                  >
+                    Messages
                   </button>
                   <button
                     onClick={handleSignOut}
