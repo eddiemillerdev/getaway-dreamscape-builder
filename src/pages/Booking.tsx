@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -49,19 +48,19 @@ const Booking = () => {
         nights: routeState.nights,
         totalAmount: routeState.totalAmount
       });
-    } else if (!bookingState.property && propertyId) {
+    } else if (propertyId && !bookingState.property) {
       console.log('Fetching property with ID:', propertyId);
       // Fetch property if we have a property ID in URL params but no state
       fetchProperty(propertyId);
-    } else if (!propertyId) {
-      console.log('No property ID, redirecting to home');
-      // No property ID in URL, redirect to home
+    } else if (!propertyId && !bookingState.property) {
+      console.log('No property ID and no saved state, redirecting to home');
+      // No property ID in URL and no saved state, redirect to home
       navigate('/');
       return;
     }
     
     scrollToTop();
-  }, [location.state, params.id]);
+  }, [location.state, params.id, bookingState.property]);
 
   const fetchProperty = async (propertyId: string) => {
     console.log('Starting property fetch for ID:', propertyId);
