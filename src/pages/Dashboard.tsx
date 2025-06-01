@@ -1,4 +1,3 @@
-
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import TripDetailsModal from '@/components/modals/TripDetailsModal';
@@ -9,6 +8,7 @@ import WalletSection from '@/components/WalletSection';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import TripsTab from '@/components/dashboard/TripsTab';
 import ProfileTab from '@/components/dashboard/ProfileTab';
+import MessagesTab from '@/components/dashboard/MessagesTab';
 import { useDashboard } from '@/hooks/useDashboard';
 
 const Dashboard = () => {
@@ -80,6 +80,8 @@ const Dashboard = () => {
                 onViewDetails={handleViewDetails}
               />
             )}
+
+            {activeTab === 'messages' && <MessagesTab />}
 
             {activeTab === 'wallet' && <WalletSection />}
 
