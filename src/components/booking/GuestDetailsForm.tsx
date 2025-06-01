@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,7 +11,7 @@ interface GuestDetails {
   phone: string;
   country: string;
   address: string;
-  password?: string;
+  password: string;
 }
 
 interface GuestDetailsFormProps {

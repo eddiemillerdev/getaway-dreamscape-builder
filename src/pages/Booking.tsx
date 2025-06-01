@@ -17,6 +17,16 @@ import BookingSummary from '@/components/booking/BookingSummary';
 import EditBookingModal from '@/components/EditBookingModal';
 import PaymentMethodModal from '@/components/PaymentMethodModal';
 
+interface GuestDetails {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  country: string;
+  address: string;
+  password: string;
+}
+
 const Booking = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -27,7 +37,7 @@ const Booking = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<any>(null);
-  const [guestDetails, setGuestDetails] = useState({
+  const [guestDetails, setGuestDetails] = useState<GuestDetails>({
     firstName: '',
     lastName: '',
     email: '',
