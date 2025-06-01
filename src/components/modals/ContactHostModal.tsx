@@ -3,67 +3,62 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-
-interface Host {
-  id: string;
-  first_name: string;
-  last_name: string;
-  avatar_url: string;
-}
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ContactHostModalProps {
   open: boolean;
   onClose: () => void;
-  host: Host | null;
+  hostId: string;
   propertyId: string;
   propertyTitle: string;
 }
 
-const ContactHostModal = ({ open, onClose, host, propertyId, propertyTitle }: ContactHostModalProps) => {
+const ContactHostModal = ({ open, onClose, hostId, propertyId, propertyTitle }: ContactHostModalProps) => {
   const [message, setMessage] = useState('');
-  const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
   const handleSendMessage = async () => {
-    if (!message.trim() || !user || !host) return;
+    if (!message.trim() || !user) return;
 
-    setSending(true);
+    setLoading(true);
     try {
-      // Find or create conversation
-      let { data: conversation } = await supabase
+      // First, find or create a conversation
+      const { data: existingConversation } = await supabase
         .from('conversations')
         .select('id')
         .eq('participant_1', user.id)
-        .eq('participant_2', host.id)
+        .eq('participant_2', hostId)
         .eq('property_id', propertyId)
-        .single();
+        .maybeSingle();
 
-      if (!conversation) {
-        const { data: newConversation, error: convError } = await supabase
+      let conversationId = existingConversation?.id;
+
+      if (!conversationId) {
+        // Create new conversation
+        const { data: newConversation, error: conversationError } = await supabase
           .from('conversations')
           .insert({
             participant_1: user.id,
-            participant_2: host.id,
+            participant_2: hostId,
             property_id: propertyId
           })
           .select('id')
           .single();
 
-        if (convError) throw convError;
-        conversation = newConversation;
+        if (conversationError) throw conversationError;
+        conversationId = newConversation.id;
       }
 
-      // Send message
+      // Send the message
       const { error: messageError } = await supabase
         .from('messages')
         .insert({
-          conversation_id: conversation.id,
+          conversation_id: conversationId,
           sender_id: user.id,
           content: message
         });
@@ -85,11 +80,9 @@ const ContactHostModal = ({ open, onClose, host, propertyId, propertyTitle }: Co
         variant: 'destructive',
       });
     } finally {
-      setSending(false);
+      setLoading(false);
     }
   };
-
-  if (!host) return null;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -99,41 +92,33 @@ const ContactHostModal = ({ open, onClose, host, propertyId, propertyTitle }: Co
         </DialogHeader>
         
         <div className="space-y-4">
-          <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-            <Avatar>
-              <AvatarImage src={host.avatar_url} />
-              <AvatarFallback>
-                {host.first_name?.charAt(0)}{host.last_name?.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="font-medium">{host.first_name} {host.last_name}</p>
-              <p className="text-sm text-gray-600">Host of {propertyTitle}</p>
-            </div>
-          </div>
-          
           <div>
-            <label className="block text-sm font-medium mb-2">Your message</label>
+            <p className="text-sm text-gray-600 mb-4">
+              Send a message about <strong>{propertyTitle}</strong>
+            </p>
+          </div>
+
+          <div>
+            <Label htmlFor="message">Your Message</Label>
             <Textarea
+              id="message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Write your message to the host..."
+              placeholder="Hi, I'm interested in your property..."
               rows={4}
-              className="w-full"
+              className="mt-1"
             />
           </div>
-          
-          <div className="flex space-x-3">
-            <Button variant="outline" onClick={onClose} className="flex-1">
+
+          <div className="flex justify-end space-x-3">
+            <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
             <Button 
               onClick={handleSendMessage}
-              disabled={!message.trim() || sending}
-              className="flex-1"
+              disabled={loading || !message.trim()}
             >
-              <Send className="h-4 w-4 mr-2" />
-              {sending ? 'Sending...' : 'Send Message'}
+              {loading ? 'Sending...' : 'Send Message'}
             </Button>
           </div>
         </div>
