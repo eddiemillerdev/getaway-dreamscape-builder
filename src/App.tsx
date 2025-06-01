@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Villas from "./pages/Villas";
 import Destinations from "./pages/Destinations";
+import Destination from "./pages/Destination";
 import ExperiencesPage from "./pages/ExperiencesPage";
 import Property from "./pages/Property";
 import Experience from "./pages/Experience";
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/villas" element={<Villas />} />
             <Route path="/destinations" element={<Destinations />} />
+            <Route path="/destination/:id" element={<Destination />} />
             <Route path="/experiences" element={<ExperiencesPage />} />
             <Route path="/property/:id" element={<Property />} />
             <Route path="/experience/:id" element={<Experience />} />

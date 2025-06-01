@@ -20,7 +20,7 @@ import PaymentMethodModal from '@/components/PaymentMethodModal';
 const Booking = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, signUp } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [specialRequests, setSpecialRequests] = useState('');
@@ -33,7 +33,8 @@ const Booking = () => {
     email: '',
     phone: '',
     country: '',
-    address: ''
+    address: '',
+    password: ''
   });
 
   const initialState = location.state || {};
@@ -91,27 +92,44 @@ const Booking = () => {
       return;
     }
 
+    if (!user && !guestDetails.password) {
+      toast({
+        title: 'Password Required',
+        description: 'Please enter a password to create your account.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
       let userId = user?.id;
 
-      // If user is not logged in, create a new profile with generated UUID
+      // If user is not logged in, create a new account
       if (!user) {
-        const { data: newProfile, error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: crypto.randomUUID(),
-            first_name: guestDetails.firstName,
-            last_name: guestDetails.lastName,
-            email: guestDetails.email,
-            phone: guestDetails.phone
-          })
-          .select('id')
-          .single();
+        const { error: signUpError } = await signUp(
+          guestDetails.email,
+          guestDetails.password,
+          guestDetails.firstName,
+          guestDetails.lastName
+        );
 
-        if (profileError) throw profileError;
-        userId = newProfile.id;
+        if (signUpError) {
+          throw new Error(signUpError.message);
+        }
+
+        // Get the newly created user
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          userId = session.user.id;
+        } else {
+          throw new Error('Failed to create account');
+        }
+      }
+
+      if (!userId) {
+        throw new Error('User authentication failed');
       }
 
       const { error } = await supabase
@@ -131,7 +149,9 @@ const Booking = () => {
 
       toast({
         title: 'Booking Confirmed!',
-        description: 'Your reservation has been successfully created.',
+        description: user 
+          ? 'Your reservation has been successfully created.'
+          : 'Your account has been created and your reservation is confirmed! Please check your email to verify your account.',
       });
 
       navigate('/booking-success', {
@@ -143,11 +163,11 @@ const Booking = () => {
           totalAmount: bookingData.totalAmount,
         },
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Booking error:', error);
       toast({
         title: 'Booking Failed',
-        description: 'There was an error processing your booking. Please try again.',
+        description: error.message || 'There was an error processing your booking. Please try again.',
         variant: 'destructive',
       });
     } finally {
