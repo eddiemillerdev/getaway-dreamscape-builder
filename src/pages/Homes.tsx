@@ -1,11 +1,12 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SearchBar from '@/components/SearchBar';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Property {
   id: string;
@@ -26,16 +27,40 @@ interface Property {
   }[];
 }
 
+const PROPERTIES_PER_PAGE = 12;
+
 const Homes = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
 
   useEffect(() => {
-    fetchHomes();
+    fetchHomes(0, true);
   }, []);
 
-  const fetchHomes = async () => {
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + document.documentElement.scrollTop >=
+        document.documentElement.offsetHeight - 1000 &&
+        !loadingMore &&
+        hasMore
+      ) {
+        loadMore();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [loadingMore, hasMore]);
+
+  const fetchHomes = async (pageNum: number, reset: boolean = false) => {
     try {
+      const from = pageNum * PROPERTIES_PER_PAGE;
+      const to = from + PROPERTIES_PER_PAGE - 1;
+
       const { data, error } = await supabase
         .from('properties')
         .select(`
@@ -50,21 +75,55 @@ const Homes = () => {
           property_images(image_url, is_primary)
         `)
         .eq('is_active', true)
-        .in('property_type', ['villa']);
+        .in('property_type', ['villa'])
+        .range(from, to);
 
       if (error) throw error;
-      setProperties(data || []);
+
+      const newProperties = data || [];
+      
+      if (reset) {
+        setProperties(newProperties);
+      } else {
+        setProperties(prev => [...prev, ...newProperties]);
+      }
+      
+      setHasMore(newProperties.length === PROPERTIES_PER_PAGE);
     } catch (error) {
       console.error('Error fetching homes:', error);
     } finally {
-      setLoading(false);
+      if (reset) {
+        setLoading(false);
+      } else {
+        setLoadingMore(false);
+      }
     }
   };
+
+  const loadMore = useCallback(() => {
+    if (!loadingMore && hasMore) {
+      setLoadingMore(true);
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchHomes(nextPage);
+    }
+  }, [page, loadingMore, hasMore]);
 
   const handleSearch = (destination: string, dateRange: any, guests: any) => {
     console.log('Search:', { destination, dateRange, guests });
     // Here you could navigate to a search results page or filter homes
   };
+
+  const PropertySkeleton = () => (
+    <div className="space-y-3">
+      <Skeleton className="h-64 w-full rounded-xl" />
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="h-4 w-1/4" />
+      </div>
+    </div>
+  );
 
   if (loading) {
     return (
@@ -85,12 +144,8 @@ const Homes = () => {
         </div>
         <div className="max-w-7xl mx-auto px-4 py-16">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="bg-gray-300 h-64 rounded-xl mb-3"></div>
-                <div className="h-4 bg-gray-300 rounded mb-2"></div>
-                <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-              </div>
+            {[...Array(12)].map((_, i) => (
+              <PropertySkeleton key={i} />
             ))}
           </div>
         </div>
@@ -177,6 +232,23 @@ const Homes = () => {
                 );
               })}
             </div>
+            
+            {/* Loading More */}
+            {loadingMore && (
+              <div className="mt-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[...Array(6)].map((_, i) => (
+                    <PropertySkeleton key={i} />
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {!hasMore && properties.length > 0 && (
+              <div className="text-center mt-12">
+                <p className="text-gray-600">You've seen all available homes</p>
+              </div>
+            )}
           </>
         )}
       </div>

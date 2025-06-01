@@ -69,6 +69,41 @@ export type Database = {
           },
         ]
       }
+      conversations: {
+        Row: {
+          created_at: string | null
+          id: string
+          participant_1: string
+          participant_2: string
+          property_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          participant_1: string
+          participant_2: string
+          property_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          participant_1?: string
+          participant_2?: string
+          property_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       destinations: {
         Row: {
           country: string
@@ -293,6 +328,41 @@ export type Database = {
         }
         Relationships: []
       }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_methods: {
         Row: {
           card_brand: string
@@ -492,37 +562,55 @@ export type Database = {
       }
       reviews: {
         Row: {
+          accuracy_rating: number | null
           booking_id: string | null
+          checkin_rating: number | null
+          cleanliness_rating: number | null
           comment: string | null
+          communication_rating: number | null
           created_at: string | null
           experience_booking_id: string | null
           experience_id: string | null
           id: string
+          location_rating: number | null
           property_id: string | null
           rating: number
           reviewer_id: string | null
+          value_rating: number | null
         }
         Insert: {
+          accuracy_rating?: number | null
           booking_id?: string | null
+          checkin_rating?: number | null
+          cleanliness_rating?: number | null
           comment?: string | null
+          communication_rating?: number | null
           created_at?: string | null
           experience_booking_id?: string | null
           experience_id?: string | null
           id?: string
+          location_rating?: number | null
           property_id?: string | null
           rating: number
           reviewer_id?: string | null
+          value_rating?: number | null
         }
         Update: {
+          accuracy_rating?: number | null
           booking_id?: string | null
+          checkin_rating?: number | null
+          cleanliness_rating?: number | null
           comment?: string | null
+          communication_rating?: number | null
           created_at?: string | null
           experience_booking_id?: string | null
           experience_id?: string | null
           id?: string
+          location_rating?: number | null
           property_id?: string | null
           rating?: number
           reviewer_id?: string | null
+          value_rating?: number | null
         }
         Relationships: [
           {
@@ -561,6 +649,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_wallets: {
+        Row: {
+          balance: number | null
+          created_at: string | null
+          id: string
+          preferred_payment_method: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          balance?: number | null
+          created_at?: string | null
+          id?: string
+          preferred_payment_method?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          balance?: number | null
+          created_at?: string | null
+          id?: string
+          preferred_payment_method?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          reference_id: string | null
+          status: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          reference_id?: string | null
+          status?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          reference_id?: string | null
+          status?: string | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
