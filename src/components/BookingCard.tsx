@@ -34,6 +34,7 @@ const BookingCard = ({ property }: BookingCardProps) => {
   const navigate = useNavigate();
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [guests, setGuests] = useState<GuestCount>({ adults: 2, children: 0, infants: 0 });
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   const updateGuestCount = (type: keyof GuestCount, operation: 'increment' | 'decrement') => {
     setGuests(prev => {
@@ -66,7 +67,7 @@ const BookingCard = ({ property }: BookingCardProps) => {
 
   const handleReserve = () => {
     if (!dateRange?.from || !dateRange?.to) {
-      alert('Please select your dates');
+      setDatePickerOpen(true);
       return;
     }
 
@@ -98,7 +99,7 @@ const BookingCard = ({ property }: BookingCardProps) => {
 
         <div className="space-y-4">
           {/* Date Range Picker */}
-          <Popover>
+          <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
@@ -137,8 +138,14 @@ const BookingCard = ({ property }: BookingCardProps) => {
                 mode="range"
                 defaultMonth={dateRange?.from}
                 selected={dateRange}
-                onSelect={setDateRange}
+                onSelect={(range) => {
+                  setDateRange(range);
+                  if (range?.from && range?.to) {
+                    setDatePickerOpen(false);
+                  }
+                }}
                 numberOfMonths={2}
+                className="pointer-events-auto"
               />
             </PopoverContent>
           </Popover>

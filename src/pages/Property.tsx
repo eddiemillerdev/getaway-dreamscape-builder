@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +8,7 @@ import PropertyHeader from '@/components/PropertyHeader';
 import PropertyImages from '@/components/PropertyImages';
 import PropertyInfo from '@/components/PropertyInfo';
 import BookingCard from '@/components/BookingCard';
+import PropertyReviews from '@/components/PropertyReviews';
 
 interface Property {
   id: string;
@@ -109,7 +109,10 @@ const Property = () => {
         <PropertyImages images={images} title={property.title} />
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <PropertyInfo property={property} />
+          <div className="lg:col-span-2 space-y-8">
+            <PropertyInfo property={property} />
+            <PropertyReviews propertyId={property.id} />
+          </div>
           <BookingCard property={property} />
         </div>
       </div>
