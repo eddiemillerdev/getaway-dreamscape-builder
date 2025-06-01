@@ -1,9 +1,15 @@
-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
+interface PaymentMethod {
+  type: string;
+  details: string;
+  name: string;
+  brand: string;
+}
+
 interface PaymentMethodSectionProps {
-  paymentMethod: any;
+  paymentMethod: PaymentMethod | null;
   onSelectPayment: () => void;
 }
 

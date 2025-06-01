@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -16,6 +15,8 @@ interface Property {
   cleaning_fee: number;
   service_fee: number;
   max_guests: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface BookingCardProps {
@@ -69,19 +70,14 @@ const BookingCard = ({ property }: BookingCardProps) => {
       return;
     }
 
-    secureLog.info('Navigating to booking with property');
+    secureLog.info('Navigating to booking with property', property);
 
-    navigate(`/booking/${property.id}`, {
+    navigate('/booking', {
       state: {
         property: {
-          id: property.id,
-          title: property.title,
-          price_per_night: property.price_per_night,
-          cleaning_fee: property.cleaning_fee || 0,
-          service_fee: property.service_fee || 0,
-          max_guests: property.max_guests,
-          property_type: 'Villa', // Default fallback
-          ...property // Spread any additional properties
+          ...property,
+          created_at: property.created_at?.toString(),
+          updated_at: property.updated_at?.toString()
         },
         checkIn: dateRange.from,
         checkOut: dateRange.to,

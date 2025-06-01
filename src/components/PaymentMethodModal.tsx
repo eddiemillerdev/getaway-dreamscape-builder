@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -17,10 +16,17 @@ import {
   validateExpiryDate 
 } from '@/utils/creditCard';
 
+interface PaymentMethod {
+  type: string;
+  details: string;
+  name: string;
+  brand: string;
+}
+
 interface PaymentMethodModalProps {
   open: boolean;
   onClose: () => void;
-  onSave?: (paymentData: any) => void;
+  onSave?: (paymentData: PaymentMethod) => void;
   onSuccess?: () => void;
 }
 
@@ -133,11 +139,11 @@ const PaymentMethodModal = ({ open, onClose, onSave, onSuccess }: PaymentMethodM
         onSuccess();
       }
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving payment method:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to save payment method',
+        description: error instanceof Error ? error.message : 'Failed to save payment method',
         variant: 'destructive',
       });
     } finally {
@@ -156,8 +162,11 @@ const PaymentMethodModal = ({ open, onClose, onSave, onSuccess }: PaymentMethodM
           {/* Payment Method Selection */}
           <div className="space-y-3">
             <div 
-              className={`border rounded-lg p-3 cursor-pointer transition-colors ${selectedMethod === 'credit' ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-gray-300'}`}
+              role="button"
+              tabIndex={0}
+              className={`w-full border rounded-lg p-3 text-left transition-colors cursor-pointer ${selectedMethod === 'credit' ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-gray-300'}`}
               onClick={() => setSelectedMethod('credit')}
+              onKeyDown={(e) => e.key === 'Enter' && setSelectedMethod('credit')}
             >
               <div className="flex items-center space-x-3">
                 <CreditCard className="h-5 w-5" />
@@ -166,8 +175,11 @@ const PaymentMethodModal = ({ open, onClose, onSave, onSuccess }: PaymentMethodM
             </div>
             
             <div 
-              className={`border rounded-lg p-3 cursor-pointer transition-colors ${selectedMethod === 'wire' ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-gray-300'}`}
+              role="button"
+              tabIndex={0}
+              className={`w-full border rounded-lg p-3 text-left transition-colors cursor-pointer ${selectedMethod === 'wire' ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-gray-300'}`}
               onClick={() => setSelectedMethod('wire')}
+              onKeyDown={(e) => e.key === 'Enter' && setSelectedMethod('wire')}
             >
               <div className="flex items-center space-x-3">
                 <University className="h-5 w-5" />
@@ -176,8 +188,11 @@ const PaymentMethodModal = ({ open, onClose, onSave, onSuccess }: PaymentMethodM
             </div>
             
             <div 
-              className={`border rounded-lg p-3 cursor-pointer transition-colors ${selectedMethod === 'crypto' ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-gray-300'}`}
+              role="button"
+              tabIndex={0}
+              className={`w-full border rounded-lg p-3 text-left transition-colors cursor-pointer ${selectedMethod === 'crypto' ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-gray-300'}`}
               onClick={() => setSelectedMethod('crypto')}
+              onKeyDown={(e) => e.key === 'Enter' && setSelectedMethod('crypto')}
             >
               <div className="flex items-center space-x-3">
                 <Bitcoin className="h-5 w-5" />

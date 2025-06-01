@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import TripDetails from '@/components/booking/TripDetails';
 import GuestDetailsForm from '@/components/booking/GuestDetailsForm';
@@ -11,14 +10,31 @@ import PaymentMethodModal from '@/components/PaymentMethodModal';
 import { useBookingState } from '@/hooks/useBookingState';
 import { secureLog } from '@/utils/security';
 
+interface GuestDetails {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  country: string;
+  address: string;
+  password: string;
+}
+
+interface PaymentMethod {
+  type: string;
+  details: string;
+  name: string;
+  brand: string;
+}
+
 interface BookingContentProps {
   loading: boolean;
   specialRequests: string;
   setSpecialRequests: (value: string) => void;
-  paymentMethod: any;
-  setPaymentMethod: (method: any) => void;
-  guestDetails: any;
-  setGuestDetails: (details: any) => void;
+  paymentMethod: PaymentMethod | null;
+  setPaymentMethod: (method: PaymentMethod) => void;
+  guestDetails: GuestDetails;
+  setGuestDetails: (details: GuestDetails) => void;
   onConfirmBooking: () => void;
 }
 
@@ -45,7 +61,7 @@ const BookingContent = ({
     });
   };
 
-  const handlePaymentMethod = (paymentData: any) => {
+  const handlePaymentMethod = (paymentData: PaymentMethod) => {
     secureLog.info('Payment method selected');
     setPaymentMethod(paymentData);
   };
@@ -67,8 +83,15 @@ const BookingContent = ({
   const totalAmount = bookingState.totalAmount || 0;
   const guests = bookingState.guests || 2;
 
+  // Ensure property has required fields
+  const property = {
+    ...bookingState.property,
+    cleaning_fee: bookingState.property.cleaning_fee || 0,
+    service_fee: bookingState.property.service_fee || 0
+  };
+
   secureLog.debug('BookingContent rendering with valid data', {
-    propertyId: bookingState.property.id,
+    propertyId: property.id,
     nights,
     guests,
     totalAmount
@@ -105,7 +128,7 @@ const BookingContent = ({
 
         <div className="space-y-6">
           <BookingSummary
-            property={bookingState.property}
+            property={property}
             nights={nights}
             totalAmount={totalAmount}
             onConfirmBooking={onConfirmBooking}
@@ -120,7 +143,7 @@ const BookingContent = ({
         initialCheckIn={checkIn}
         initialCheckOut={checkOut}
         initialGuests={guests}
-        maxGuests={bookingState.property?.max_guests || 8}
+        maxGuests={property.max_guests}
         onSave={handleEditBooking}
       />
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -144,12 +143,17 @@ const Header = () => {
               </DropdownMenu>
             ) : (
               <div className="flex items-center space-x-2">
-                <button onClick={() => handleNavigation('/auth')}>
-                  <Button variant="ghost">Sign In</Button>
-                </button>
-                <button onClick={() => handleNavigation('/auth')}>
-                  <Button>Sign Up</Button>
-                </button>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => handleNavigation('/auth')}
+                >
+                  Sign In
+                </Button>
+                <Button 
+                  onClick={() => handleNavigation('/auth')}
+                >
+                  Sign Up
+                </Button>
               </div>
             )}
           </div>

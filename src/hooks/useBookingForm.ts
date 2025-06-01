@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,6 +18,13 @@ interface GuestDetails {
   password: string;
 }
 
+interface PaymentMethod {
+  type: string;
+  details: string;
+  name: string;
+  brand: string;
+}
+
 // Rate limiter for booking attempts (max 3 attempts per 10 minutes)
 const bookingRateLimiter = createRateLimiter(3, 10 * 60 * 1000);
 
@@ -29,7 +35,7 @@ export const useBookingForm = () => {
   const { bookingState, clearBookingState } = useBookingState();
   const [loading, setLoading] = useState(false);
   const [specialRequests, setSpecialRequests] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<any>(null);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [guestDetails, setGuestDetails] = useState<GuestDetails>({
     firstName: '',
     lastName: '',
@@ -147,8 +153,27 @@ export const useBookingForm = () => {
 
     if (!validateForm()) return;
 
+    // Validate booking state
+    if (!bookingState.property || !bookingState.checkIn || !bookingState.checkOut) {
+      secureLog.error('Invalid booking state', { 
+        hasProperty: !!bookingState.property,
+        hasCheckIn: !!bookingState.checkIn,
+        hasCheckOut: !!bookingState.checkOut
+      });
+      toast({
+        title: 'Booking Error',
+        description: 'Please select a property and dates before proceeding.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setLoading(true);
-    secureLog.info('Starting booking process');
+    secureLog.info('Starting booking process', {
+      propertyId: bookingState.property.id,
+      checkIn: bookingState.checkIn,
+      checkOut: bookingState.checkOut
+    });
 
     try {
       let userId = user?.id;
@@ -201,8 +226,8 @@ export const useBookingForm = () => {
         .insert({
           guest_id: userId,
           property_id: bookingState.property.id,
-          check_in_date: format(bookingState.checkIn!, 'yyyy-MM-dd'),
-          check_out_date: format(bookingState.checkOut!, 'yyyy-MM-dd'),
+          check_in_date: format(bookingState.checkIn, 'yyyy-MM-dd'),
+          check_out_date: format(bookingState.checkOut, 'yyyy-MM-dd'),
           guests: bookingState.guests,
           total_amount: bookingState.totalAmount,
           nights: bookingState.nights,
@@ -230,11 +255,11 @@ export const useBookingForm = () => {
           totalAmount: bookingState.totalAmount,
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       secureLog.error('Booking error', error);
       toast({
         title: 'Booking Failed',
-        description: error.message || 'There was an error processing your booking. Please try again.',
+        description: error instanceof Error ? error.message : 'There was an error processing your booking. Please try again.',
         variant: 'destructive',
       });
     } finally {
