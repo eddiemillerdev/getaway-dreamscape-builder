@@ -6,11 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, MapPin, Users, Star } from 'lucide-react';
+import { Calendar, MapPin, Users, Star, CreditCard, UserPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useNavigate } from 'react-router-dom';
+import TripDetailsModal from '@/components/modals/TripDetailsModal';
+import EditProfileModal from '@/components/modals/EditProfileModal';
+import HostRequestModal from '@/components/modals/HostRequestModal';
+import PaymentPreferencesModal from '@/components/modals/PaymentPreferencesModal';
 
 interface Booking {
   id: string;
@@ -40,6 +44,12 @@ const Dashboard = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [tripModalOpen, setTripModalOpen] = useState(false);
+  const [editProfileModalOpen, setEditProfileModalOpen] = useState(false);
+  const [hostRequestModalOpen, setHostRequestModalOpen] = useState(false);
+  const [paymentPreferencesModalOpen, setPaymentPreferencesModalOpen] = useState(false);
+  const [hostRequestStatus, setHostRequestStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -72,13 +82,30 @@ const Dashboard = () => {
         .eq('guest_id', user?.id)
         .order('created_at', { ascending: false });
 
+      // Check host request status
+      const { data: hostRequestData } = await supabase
+        .from('host_requests')
+        .select('status')
+        .eq('user_id', user?.id)
+        .single();
+
       setProfile(profileData);
       setBookings(bookingsData || []);
+      setHostRequestStatus(hostRequestData?.status || null);
     } catch (error) {
       console.error('Error fetching user data:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleViewTripDetails = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setTripModalOpen(true);
+  };
+
+  const handleHostRequestSubmitted = () => {
+    setHostRequestStatus('pending');
   };
 
   const getStatusColor = (status: string) => {
@@ -139,7 +166,7 @@ const Dashboard = () => {
                 ) : (
                   <div className="space-y-4">
                     {bookings.map((booking) => (
-                      <Card key={booking.id} className="border-l-4 border-l-rose-500">
+                      <Card key={booking.id} className="border-l-4 border-l-teal-500">
                         <CardContent className="p-6">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
@@ -169,7 +196,12 @@ const Dashboard = () => {
                             </div>
                             <div className="text-right">
                               <p className="text-lg font-semibold">${booking.total_amount}</p>
-                              <Button variant="outline" size="sm" className="mt-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="mt-2"
+                                onClick={() => handleViewTripDetails(booking)}
+                              >
                                 View Details
                               </Button>
                             </div>
@@ -214,7 +246,26 @@ const Dashboard = () => {
                   <label className="text-sm font-medium text-gray-700">Bio</label>
                   <p className="text-lg">{profile?.bio || 'No bio provided'}</p>
                 </div>
-                <Button>Edit Profile</Button>
+                
+                <div className="flex space-x-3">
+                  <Button onClick={() => setEditProfileModalOpen(true)}>
+                    Edit Profile
+                  </Button>
+                  
+                  {!hostRequestStatus ? (
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setHostRequestModalOpen(true)}
+                    >
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Request to be a Host
+                    </Button>
+                  ) : (
+                    <Button variant="outline" disabled>
+                      Host Request: {hostRequestStatus}
+                    </Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -229,6 +280,18 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium mb-2">Payment Preferences</h4>
+                    <p className="text-sm text-gray-600 mb-4">Manage your saved payment methods</p>
+                    <Button 
+                      variant="outline"
+                      onClick={() => setPaymentPreferencesModalOpen(true)}
+                    >
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Manage Payment Methods
+                    </Button>
+                  </div>
+                  
                   <div>
                     <h4 className="font-medium mb-2">Notifications</h4>
                     <p className="text-sm text-gray-600 mb-4">Choose what notifications you'd like to receive</p>
@@ -254,6 +317,29 @@ const Dashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <TripDetailsModal
+        open={tripModalOpen}
+        onClose={() => setTripModalOpen(false)}
+        booking={selectedBooking}
+      />
+
+      <EditProfileModal
+        open={editProfileModalOpen}
+        onClose={() => setEditProfileModalOpen(false)}
+        onProfileUpdated={fetchUserData}
+      />
+
+      <HostRequestModal
+        open={hostRequestModalOpen}
+        onClose={() => setHostRequestModalOpen(false)}
+        onRequestSubmitted={handleHostRequestSubmitted}
+      />
+
+      <PaymentPreferencesModal
+        open={paymentPreferencesModalOpen}
+        onClose={() => setPaymentPreferencesModalOpen(false)}
+      />
       
       <Footer />
     </div>

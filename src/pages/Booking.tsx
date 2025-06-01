@@ -1,11 +1,11 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { scrollToTop } from '@/utils/scrollToTop';
+import { useBookingState } from '@/hooks/useBookingState';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BookingHeader from '@/components/booking/BookingHeader';
@@ -33,6 +33,7 @@ const Booking = () => {
   const navigate = useNavigate();
   const { user, signUp } = useAuth();
   const { toast } = useToast();
+  const { bookingState, updateBookingState, clearBookingState } = useBookingState();
   const [loading, setLoading] = useState(false);
   const [specialRequests, setSpecialRequests] = useState('');
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -48,25 +49,57 @@ const Booking = () => {
     password: ''
   });
 
-  const initialState = location.state || {};
-  const [bookingData, setBookingData] = useState({
-    property: initialState.property,
-    checkIn: initialState.checkIn,
-    checkOut: initialState.checkOut,
-    guests: initialState.guests,
-    nights: initialState.nights,
-    totalAmount: initialState.totalAmount
-  });
-
-  // Scroll to top when component mounts
-  useState(() => {
+  // Initialize booking state from route or saved state
+  useEffect(() => {
+    const routeState = location.state;
+    if (routeState && routeState.property) {
+      // Use route state and save it
+      updateBookingState({
+        property: routeState.property,
+        checkIn: routeState.checkIn,
+        checkOut: routeState.checkOut,
+        guests: routeState.guests,
+        nights: routeState.nights,
+        totalAmount: routeState.totalAmount
+      });
+    } else if (!bookingState.property) {
+      // No saved state and no route state, redirect to home
+      navigate('/');
+      return;
+    }
+    
     scrollToTop();
-  });
+  }, [location.state]);
 
-  if (!bookingData.property || !bookingData.checkIn || !bookingData.checkOut) {
-    navigate('/');
-    return null;
-  }
+  // Load default payment method if user is logged in
+  useEffect(() => {
+    if (user && !paymentMethod) {
+      loadDefaultPaymentMethod();
+    }
+  }, [user]);
+
+  const loadDefaultPaymentMethod = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('payment_methods')
+        .select('*')
+        .eq('user_id', user?.id)
+        .eq('is_default', true)
+        .single();
+
+      if (data && !error) {
+        setPaymentMethod({
+          type: 'Credit Card',
+          details: `**** **** **** ${data.card_last_four}`,
+          name: data.cardholder_name,
+          brand: data.card_brand
+        });
+      }
+    } catch (error) {
+      // No default payment method found, that's okay
+      console.log('No default payment method found');
+    }
+  };
 
   const scrollToError = (elementId: string, errorId: string, message: string) => {
     const element = document.getElementById(elementId);
@@ -90,19 +123,10 @@ const Booking = () => {
   };
 
   const handleEditBooking = (checkIn: Date, checkOut: Date, guests: number) => {
-    const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
-    const subtotal = nights * bookingData.property.price_per_night;
-    const cleaningFee = bookingData.property.cleaning_fee || 0;
-    const serviceFee = bookingData.property.service_fee || 0;
-    const totalAmount = subtotal + cleaningFee + serviceFee;
-
-    setBookingData({
-      ...bookingData,
+    updateBookingState({
       checkIn,
       checkOut,
-      guests,
-      nights,
-      totalAmount
+      guests
     });
   };
 
@@ -215,12 +239,12 @@ const Booking = () => {
         .from('bookings')
         .insert({
           guest_id: userId,
-          property_id: bookingData.property.id,
-          check_in_date: format(bookingData.checkIn, 'yyyy-MM-dd'),
-          check_out_date: format(bookingData.checkOut, 'yyyy-MM-dd'),
-          guests: bookingData.guests,
-          total_amount: bookingData.totalAmount,
-          nights: bookingData.nights,
+          property_id: bookingState.property.id,
+          check_in_date: format(bookingState.checkIn!, 'yyyy-MM-dd'),
+          check_out_date: format(bookingState.checkOut!, 'yyyy-MM-dd'),
+          guests: bookingState.guests,
+          total_amount: bookingState.totalAmount,
+          nights: bookingState.nights,
           special_requests: specialRequests || null,
         });
 
@@ -233,13 +257,16 @@ const Booking = () => {
           : 'Your account has been created and your reservation is confirmed! Please check your email to verify your account.',
       });
 
+      // Clear saved booking state
+      clearBookingState();
+
       navigate('/booking-success', {
         state: {
-          property: bookingData.property,
-          checkIn: bookingData.checkIn,
-          checkOut: bookingData.checkOut,
-          guests: bookingData.guests,
-          totalAmount: bookingData.totalAmount,
+          property: bookingState.property,
+          checkIn: bookingState.checkIn,
+          checkOut: bookingState.checkOut,
+          guests: bookingState.guests,
+          totalAmount: bookingState.totalAmount,
         },
       });
     } catch (error: any) {
@@ -254,6 +281,18 @@ const Booking = () => {
     }
   };
 
+  if (!bookingState.property || !bookingState.checkIn || !bookingState.checkOut) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Loading booking details...</div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
       <Header />
@@ -264,9 +303,9 @@ const Booking = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             <TripDetails
-              checkIn={bookingData.checkIn}
-              checkOut={bookingData.checkOut}
-              guests={bookingData.guests}
+              checkIn={bookingState.checkIn}
+              checkOut={bookingState.checkOut}
+              guests={bookingState.guests}
               onEdit={() => setEditModalOpen(true)}
             />
 
@@ -290,9 +329,9 @@ const Booking = () => {
 
           <div className="space-y-6">
             <BookingSummary
-              property={bookingData.property}
-              nights={bookingData.nights}
-              totalAmount={bookingData.totalAmount}
+              property={bookingState.property}
+              nights={bookingState.nights}
+              totalAmount={bookingState.totalAmount}
               onConfirmBooking={handleBooking}
               loading={loading}
             />
@@ -303,10 +342,10 @@ const Booking = () => {
       <EditBookingModal
         open={editModalOpen}
         onClose={() => setEditModalOpen(false)}
-        initialCheckIn={bookingData.checkIn}
-        initialCheckOut={bookingData.checkOut}
-        initialGuests={bookingData.guests}
-        maxGuests={bookingData.property.max_guests}
+        initialCheckIn={bookingState.checkIn}
+        initialCheckOut={bookingState.checkOut}
+        initialGuests={bookingState.guests}
+        maxGuests={bookingState.property.max_guests}
         onSave={handleEditBooking}
       />
 

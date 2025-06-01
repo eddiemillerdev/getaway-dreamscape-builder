@@ -1,10 +1,21 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CreditCard, University, Bitcoin } from 'lucide-react';
+import { CreditCard, University, Bitcoin, Calendar, Lock } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import CreditCardIcons from './CreditCardIcons';
+import { 
+  getCreditCardType, 
+  formatCreditCard, 
+  formatExpiryDate, 
+  validateCreditCard, 
+  validateExpiryDate 
+} from '@/utils/creditCard';
 
 interface PaymentMethodModalProps {
   open: boolean;
@@ -21,38 +32,125 @@ const PaymentMethodModal = ({ open, onClose, onSave }: PaymentMethodModalProps) 
     cvv: '',
     name: ''
   });
+  const [errors, setErrors] = useState({
+    number: '',
+    expiry: '',
+    cvv: '',
+    name: ''
+  });
+  
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const cardType = getCreditCardType(cardData.number);
+
+  const validateForm = () => {
+    const newErrors = { number: '', expiry: '', cvv: '', name: '' };
+    let isValid = true;
+
+    if (selectedMethod === 'credit') {
+      if (!cardData.name.trim()) {
+        newErrors.name = 'Cardholder name is required';
+        isValid = false;
+      }
+
+      if (!validateCreditCard(cardData.number)) {
+        newErrors.number = 'Invalid credit card number';
+        isValid = false;
+      }
+
+      if (!validateExpiryDate(cardData.expiry)) {
+        newErrors.expiry = 'Invalid expiry date';
+        isValid = false;
+      }
+
+      if (cardData.cvv.length < 3) {
+        newErrors.cvv = 'Invalid CVV';
+        isValid = false;
+      }
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCreditCard(e.target.value);
+    if (formatted.replace(/\s/g, '').length <= 19) {
+      setCardData({ ...cardData, number: formatted });
+    }
+  };
+
+  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatExpiryDate(e.target.value);
+    if (formatted.length <= 5) {
+      setCardData({ ...cardData, expiry: formatted });
+    }
+  };
 
   const handleSave = async () => {
+    if (!validateForm()) return;
+    
     setLoading(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    let paymentData;
-    
-    if (selectedMethod === 'credit') {
-      paymentData = {
-        type: 'Credit Card',
-        details: `**** **** **** ${cardData.number.slice(-4)}`,
-        name: cardData.name
-      };
-    } else if (selectedMethod === 'wire') {
-      paymentData = {
-        type: 'Bank Wire',
-        details: 'Wire transfer details will be provided',
-        name: 'Bank Transfer'
-      };
-    } else {
-      paymentData = {
-        type: 'Cryptocurrency',
-        details: 'Bitcoin payment address will be provided',
-        name: 'Bitcoin'
-      };
+    try {
+      let paymentData;
+      
+      if (selectedMethod === 'credit') {
+        // Save credit card to database
+        const cleanNumber = cardData.number.replace(/\s/g, '');
+        const [month, year] = cardData.expiry.split('/');
+        
+        const { error } = await supabase
+          .from('payment_methods')
+          .insert({
+            user_id: user?.id,
+            card_last_four: cleanNumber.slice(-4),
+            card_brand: cardType,
+            expiry_month: parseInt(month),
+            expiry_year: parseInt(year) + 2000,
+            cardholder_name: cardData.name,
+            is_default: true
+          });
+
+        if (error) throw error;
+
+        paymentData = {
+          type: 'Credit Card',
+          details: `**** **** **** ${cleanNumber.slice(-4)}`,
+          name: cardData.name,
+          brand: cardType
+        };
+
+        toast({
+          title: 'Payment Method Saved',
+          description: 'Your credit card has been saved for future use.',
+        });
+      } else if (selectedMethod === 'wire') {
+        paymentData = {
+          type: 'Bank Wire',
+          details: 'Wire transfer details will be provided',
+          name: 'Bank Transfer'
+        };
+      } else {
+        paymentData = {
+          type: 'Cryptocurrency',
+          details: 'Bitcoin payment address will be provided',
+          name: 'Bitcoin'
+        };
+      }
+      
+      onSave(paymentData);
+      onClose();
+    } catch (error: any) {
+      console.error('Error saving payment method:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to save payment method',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
     }
-    
-    onSave(paymentData);
-    setLoading(false);
-    onClose();
   };
 
   return (
@@ -66,7 +164,7 @@ const PaymentMethodModal = ({ open, onClose, onSave }: PaymentMethodModalProps) 
           {/* Payment Method Selection */}
           <div className="space-y-3">
             <div 
-              className={`border rounded-lg p-3 cursor-pointer ${selectedMethod === 'credit' ? 'border-rose-500 bg-rose-50' : 'border-gray-200'}`}
+              className={`border rounded-lg p-3 cursor-pointer transition-colors ${selectedMethod === 'credit' ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-gray-300'}`}
               onClick={() => setSelectedMethod('credit')}
             >
               <div className="flex items-center space-x-3">
@@ -76,7 +174,7 @@ const PaymentMethodModal = ({ open, onClose, onSave }: PaymentMethodModalProps) 
             </div>
             
             <div 
-              className={`border rounded-lg p-3 cursor-pointer ${selectedMethod === 'wire' ? 'border-rose-500 bg-rose-50' : 'border-gray-200'}`}
+              className={`border rounded-lg p-3 cursor-pointer transition-colors ${selectedMethod === 'wire' ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-gray-300'}`}
               onClick={() => setSelectedMethod('wire')}
             >
               <div className="flex items-center space-x-3">
@@ -86,7 +184,7 @@ const PaymentMethodModal = ({ open, onClose, onSave }: PaymentMethodModalProps) 
             </div>
             
             <div 
-              className={`border rounded-lg p-3 cursor-pointer ${selectedMethod === 'crypto' ? 'border-rose-500 bg-rose-50' : 'border-gray-200'}`}
+              className={`border rounded-lg p-3 cursor-pointer transition-colors ${selectedMethod === 'crypto' ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-gray-300'}`}
               onClick={() => setSelectedMethod('crypto')}
             >
               <div className="flex items-center space-x-3">
@@ -106,35 +204,59 @@ const PaymentMethodModal = ({ open, onClose, onSave }: PaymentMethodModalProps) 
                   value={cardData.name}
                   onChange={(e) => setCardData({...cardData, name: e.target.value})}
                   placeholder="John Doe"
+                  className={errors.name ? 'border-red-500' : ''}
                 />
+                {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name}</p>}
               </div>
+              
               <div>
                 <Label htmlFor="cardNumber">Card Number</Label>
-                <Input
-                  id="cardNumber"
-                  value={cardData.number}
-                  onChange={(e) => setCardData({...cardData, number: e.target.value.replace(/\D/g, '').slice(0, 16)})}
-                  placeholder="1234 5678 9012 3456"
-                />
+                <div className="relative">
+                  <Input
+                    id="cardNumber"
+                    value={cardData.number}
+                    onChange={handleCardNumberChange}
+                    placeholder="1234 5678 9012 3456"
+                    className={`pl-12 ${errors.number ? 'border-red-500' : ''}`}
+                  />
+                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                    <CreditCardIcons type={cardType} className="h-6 w-6" />
+                  </div>
+                </div>
+                {errors.number && <p className="text-sm text-red-500 mt-1">{errors.number}</p>}
+                {cardType !== 'unknown' && cardData.number && (
+                  <p className="text-sm text-gray-600 mt-1 capitalize">{cardType} Card</p>
+                )}
               </div>
+              
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="expiry">Expiry Date</Label>
-                  <Input
-                    id="expiry"
-                    value={cardData.expiry}
-                    onChange={(e) => setCardData({...cardData, expiry: e.target.value})}
-                    placeholder="MM/YY"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="expiry"
+                      value={cardData.expiry}
+                      onChange={handleExpiryChange}
+                      placeholder="MM/YY"
+                      className={`pl-10 ${errors.expiry ? 'border-red-500' : ''}`}
+                    />
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  </div>
+                  {errors.expiry && <p className="text-sm text-red-500 mt-1">{errors.expiry}</p>}
                 </div>
                 <div>
                   <Label htmlFor="cvv">CVV</Label>
-                  <Input
-                    id="cvv"
-                    value={cardData.cvv}
-                    onChange={(e) => setCardData({...cardData, cvv: e.target.value.replace(/\D/g, '').slice(0, 3)})}
-                    placeholder="123"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="cvv"
+                      value={cardData.cvv}
+                      onChange={(e) => setCardData({...cardData, cvv: e.target.value.replace(/\D/g, '').slice(0, 4)})}
+                      placeholder="123"
+                      className={`pl-10 ${errors.cvv ? 'border-red-500' : ''}`}
+                    />
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  </div>
+                  {errors.cvv && <p className="text-sm text-red-500 mt-1">{errors.cvv}</p>}
                 </div>
               </div>
             </div>
@@ -162,7 +284,7 @@ const PaymentMethodModal = ({ open, onClose, onSave }: PaymentMethodModalProps) 
             </Button>
             <Button 
               onClick={handleSave}
-              disabled={loading || (selectedMethod === 'credit' && (!cardData.name || !cardData.number || !cardData.expiry || !cardData.cvv))}
+              disabled={loading}
             >
               {loading ? 'Saving...' : 'Save Payment Method'}
             </Button>

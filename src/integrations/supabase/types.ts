@@ -263,6 +263,75 @@ export type Database = {
           },
         ]
       }
+      host_requests: {
+        Row: {
+          admin_notes: string | null
+          created_at: string | null
+          id: string
+          request_message: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string | null
+          id?: string
+          request_message?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string | null
+          id?: string
+          request_message?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      payment_methods: {
+        Row: {
+          card_brand: string
+          card_last_four: string
+          cardholder_name: string
+          created_at: string | null
+          expiry_month: number
+          expiry_year: number
+          id: string
+          is_default: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          card_brand: string
+          card_last_four: string
+          cardholder_name: string
+          created_at?: string | null
+          expiry_month: number
+          expiry_year: number
+          id?: string
+          is_default?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          card_brand?: string
+          card_last_four?: string
+          cardholder_name?: string
+          created_at?: string | null
+          expiry_month?: number
+          expiry_year?: number
+          id?: string
+          is_default?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
