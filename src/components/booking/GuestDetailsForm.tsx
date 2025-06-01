@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
-import { sanitizeInput, sanitizeEmail, sanitizePhone } from '@/utils/security';
+import { sanitizeInput, sanitizeEmail, sanitizePhone, secureLog } from '@/utils/security';
 
 interface GuestDetails {
   firstName: string;
@@ -26,6 +26,7 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
 
   useEffect(() => {
     if (user && user.user_metadata) {
+      secureLog.info('Pre-filling user data from authenticated session');
       setGuestDetails({
         ...guestDetails,
         firstName: sanitizeInput(user.user_metadata.first_name || ''),
@@ -78,6 +79,8 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
               onChange={(e) => handleInputChange('firstName', e.target.value)}
               placeholder="John"
               maxLength={50}
+              required
+              autoComplete="given-name"
             />
             <div id="firstName-error" className="text-sm text-red-500 mt-1 hidden">First name is required</div>
           </div>
@@ -89,6 +92,8 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
               onChange={(e) => handleInputChange('lastName', e.target.value)}
               placeholder="Doe"
               maxLength={50}
+              required
+              autoComplete="family-name"
             />
             <div id="lastName-error" className="text-sm text-red-500 mt-1 hidden">Last name is required</div>
           </div>
@@ -103,6 +108,8 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
               onChange={(e) => handleInputChange('email', e.target.value)}
               placeholder="john@example.com"
               maxLength={100}
+              required
+              autoComplete="email"
             />
             <div id="email-error" className="text-sm text-red-500 mt-1 hidden">Valid email is required</div>
           </div>
@@ -115,13 +122,15 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
               type="password"
               value={guestDetails.password || ''}
               onChange={(e) => handleInputChange('password', e.target.value)}
-              placeholder="Enter a password for your account"
+              placeholder="Enter a secure password"
               minLength={8}
               maxLength={100}
+              required
+              autoComplete="new-password"
             />
             <div id="password-error" className="text-sm text-red-500 mt-1 hidden">Password is required</div>
             <p className="text-xs text-gray-500 mt-1">
-              We'll create an account for you to manage your bookings
+              Password must be at least 8 characters with uppercase, lowercase, and number
             </p>
           </div>
         )}
@@ -129,10 +138,12 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
           <Label htmlFor="phone">Phone Number</Label>
           <Input
             id="phone"
+            type="tel"
             value={guestDetails.phone}
             onChange={(e) => handleInputChange('phone', e.target.value)}
             placeholder="+1 (555) 123-4567"
             maxLength={20}
+            autoComplete="tel"
           />
         </div>
         <div>
@@ -143,6 +154,7 @@ const GuestDetailsForm = ({ guestDetails, setGuestDetails }: GuestDetailsFormPro
             onChange={(e) => handleInputChange('address', e.target.value)}
             placeholder="123 Main St, City, State"
             maxLength={200}
+            autoComplete="street-address"
           />
         </div>
       </CardContent>

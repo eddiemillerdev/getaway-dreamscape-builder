@@ -6,6 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { useBookingState } from '@/hooks/useBookingState';
+import { createValidator } from '@/utils/validation';
+import { secureLog, createRateLimiter } from '@/utils/security';
 
 interface GuestDetails {
   firstName: string;
@@ -16,6 +18,9 @@ interface GuestDetails {
   address: string;
   password: string;
 }
+
+// Rate limiter for booking attempts (max 3 attempts per 10 minutes)
+const bookingRateLimiter = createRateLimiter(3, 10 * 60 * 1000);
 
 export const useBookingForm = () => {
   const navigate = useNavigate();
@@ -58,6 +63,61 @@ export const useBookingForm = () => {
   const validateForm = () => {
     hideAllErrors();
     
+    const validator = createValidator();
+    
+    // Validate guest details
+    validator
+      .validateField('firstName', guestDetails.firstName, {
+        required: true,
+        type: 'text',
+        minLength: 1,
+        maxLength: 50
+      })
+      .validateField('lastName', guestDetails.lastName, {
+        required: true,
+        type: 'text',
+        minLength: 1,
+        maxLength: 50
+      });
+
+    if (!user) {
+      validator
+        .validateField('email', guestDetails.email, {
+          required: true,
+          type: 'email'
+        })
+        .validateField('password', guestDetails.password, {
+          required: true,
+          type: 'password'
+        });
+    }
+
+    validator
+      .validateField('phone', guestDetails.phone, {
+        type: 'phone',
+        maxLength: 20
+      })
+      .validateField('address', guestDetails.address, {
+        type: 'text',
+        maxLength: 200
+      });
+
+    const result = validator.getResult();
+
+    if (!result.isValid) {
+      // Show first error
+      const firstError = Object.keys(result.errors)[0];
+      const errorMessage = result.errors[firstError];
+      
+      scrollToError('guest-details', `${firstError}-error`, errorMessage);
+      toast({
+        title: 'Validation Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      return false;
+    }
+
     if (!paymentMethod) {
       toast({
         title: 'Payment Method Required',
@@ -67,58 +127,34 @@ export const useBookingForm = () => {
       return false;
     }
 
-    if (!guestDetails.firstName) {
-      scrollToError('guest-details', 'firstName-error', 'First name is required');
-      toast({
-        title: 'Guest Details Required',
-        description: 'Please fill in all required guest details.',
-        variant: 'destructive',
-      });
-      return false;
-    }
-
-    if (!guestDetails.lastName) {
-      scrollToError('guest-details', 'lastName-error', 'Last name is required');
-      toast({
-        title: 'Guest Details Required',
-        description: 'Please fill in all required guest details.',
-        variant: 'destructive',
-      });
-      return false;
-    }
-
-    if (!user && !guestDetails.email) {
-      scrollToError('guest-details', 'email-error', 'Valid email is required');
-      toast({
-        title: 'Email Required',
-        description: 'Please provide your email address.',
-        variant: 'destructive',
-      });
-      return false;
-    }
-
-    if (!user && !guestDetails.password) {
-      scrollToError('guest-details', 'password-error', 'Password is required');
-      toast({
-        title: 'Password Required',
-        description: 'Please enter a password to create your account.',
-        variant: 'destructive',
-      });
-      return false;
-    }
+    // Update guest details with sanitized data
+    setGuestDetails(prev => ({ ...prev, ...result.sanitizedData }));
 
     return true;
   };
 
   const handleBooking = async () => {
+    // Rate limiting check
+    const userKey = user?.id || guestDetails.email || 'anonymous';
+    if (!bookingRateLimiter(userKey)) {
+      toast({
+        title: 'Too Many Attempts',
+        description: 'Please wait before trying again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (!validateForm()) return;
 
     setLoading(true);
+    secureLog.info('Starting booking process');
 
     try {
       let userId = user?.id;
 
       if (!user) {
+        secureLog.info('Creating new user account');
         const { error: signUpError } = await signUp(
           guestDetails.email,
           guestDetails.password,
@@ -127,7 +163,7 @@ export const useBookingForm = () => {
         );
 
         if (signUpError) {
-          console.error('Sign up error:', signUpError);
+          secureLog.error('Sign up error', signUpError);
           
           if (signUpError.message.includes('User already registered')) {
             scrollToError('guest-details', 'email-error', 'An account with this email already exists. Please sign in instead.');
@@ -149,6 +185,7 @@ export const useBookingForm = () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           userId = session.user.id;
+          secureLog.info('User account created successfully');
         } else {
           throw new Error('Failed to create account');
         }
@@ -158,6 +195,7 @@ export const useBookingForm = () => {
         throw new Error('User authentication failed');
       }
 
+      secureLog.info('Creating booking record');
       const { error } = await supabase
         .from('bookings')
         .insert({
@@ -173,6 +211,7 @@ export const useBookingForm = () => {
 
       if (error) throw error;
 
+      secureLog.info('Booking created successfully');
       toast({
         title: 'Booking Confirmed!',
         description: user 
@@ -192,7 +231,7 @@ export const useBookingForm = () => {
         },
       });
     } catch (error: any) {
-      console.error('Booking error:', error);
+      secureLog.error('Booking error', error);
       toast({
         title: 'Booking Failed',
         description: error.message || 'There was an error processing your booking. Please try again.',

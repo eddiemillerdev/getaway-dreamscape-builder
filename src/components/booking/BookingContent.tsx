@@ -37,6 +37,7 @@ const BookingContent = ({
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
   const handleEditBooking = (checkIn: Date, checkOut: Date, guests: number) => {
+    secureLog.info('Updating booking details');
     updateBookingState({
       checkIn,
       checkOut,
@@ -45,15 +46,16 @@ const BookingContent = ({
   };
 
   const handlePaymentMethod = (paymentData: any) => {
+    secureLog.info('Payment method selected');
     setPaymentMethod(paymentData);
   };
 
   // Safety check - ensure we have property and required data
   if (!bookingState.property) {
-    secureLog.error('BookingContent rendered without property');
+    secureLog.error('BookingContent rendered without property data');
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Error: Property data missing</div>
+        <div className="text-lg text-red-600">Error: Property data missing. Please try again.</div>
       </div>
     );
   }
@@ -65,7 +67,12 @@ const BookingContent = ({
   const totalAmount = bookingState.totalAmount || 0;
   const guests = bookingState.guests || 2;
 
-  secureLog.info('BookingContent rendering with valid data');
+  secureLog.debug('BookingContent rendering with valid data', {
+    propertyId: bookingState.property.id,
+    nights,
+    guests,
+    totalAmount
+  });
 
   return (
     <>
