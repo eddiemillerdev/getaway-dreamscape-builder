@@ -68,9 +68,27 @@ const BookingCard = ({ property }: BookingCardProps) => {
       return;
     }
 
+    console.log('Navigating to booking with property:', property);
+    console.log('Booking details:', {
+      checkIn: dateRange.from,
+      checkOut: dateRange.to,
+      guests: totalGuests,
+      nights: totalNights,
+      totalAmount: total
+    });
+
     navigate(`/booking/${property.id}`, {
       state: {
-        property,
+        property: {
+          id: property.id,
+          title: property.title,
+          price_per_night: property.price_per_night,
+          cleaning_fee: property.cleaning_fee || 0,
+          service_fee: property.service_fee || 0,
+          max_guests: property.max_guests,
+          property_type: 'Villa', // Default fallback
+          ...property // Spread any additional properties
+        },
         checkIn: dateRange.from,
         checkOut: dateRange.to,
         guests: totalGuests,

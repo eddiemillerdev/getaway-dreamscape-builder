@@ -48,14 +48,20 @@ const Booking = () => {
       
       // If we have route state with property, use it
       if (routeState?.property) {
-        console.log('Using route state property');
+        console.log('Using route state property:', routeState.property);
+        const checkIn = routeState.checkIn ? new Date(routeState.checkIn) : new Date();
+        const checkOut = routeState.checkOut ? new Date(routeState.checkOut) : new Date(Date.now() + 24 * 60 * 60 * 1000);
+        const guests = routeState.guests || 2;
+        const nights = routeState.nights || 1;
+        const totalAmount = routeState.totalAmount || (nights * routeState.property.price_per_night);
+        
         updateBookingState({
           property: routeState.property,
-          checkIn: routeState.checkIn ? new Date(routeState.checkIn) : new Date(),
-          checkOut: routeState.checkOut ? new Date(routeState.checkOut) : new Date(Date.now() + 24 * 60 * 60 * 1000),
-          guests: routeState.guests || 2,
-          nights: routeState.nights || 1,
-          totalAmount: routeState.totalAmount || 0
+          checkIn,
+          checkOut,
+          guests,
+          nights,
+          totalAmount
         });
         setIsInitialized(true);
         return;
@@ -63,7 +69,7 @@ const Booking = () => {
       
       // If we already have a property in state, we're good
       if (bookingState.property) {
-        console.log('Using existing property from state');
+        console.log('Using existing property from state:', bookingState.property);
         setIsInitialized(true);
         return;
       }
@@ -82,22 +88,27 @@ const Booking = () => {
         description: 'Please select a property to book.',
         variant: 'destructive',
       });
-      navigate('/');
+      navigate('/homes');
     };
 
     if (!isInitialized) {
       initializeBooking();
     }
-  }, [location.state, params.id, bookingState.property, isInitialized]);
+  }, [location.state, params.id, bookingState.property, isInitialized, updateBookingState, toast, navigate]);
 
   const fetchProperty = async (propertyId: string) => {
     setPropertyLoading(true);
     try {
-      console.log('Fetching property data...');
+      console.log('Fetching property data for ID:', propertyId);
       const { data: propertyData, error } = await supabase
         .from('properties')
-        .select('*')
+        .select(`
+          *,
+          destination:destinations(name, country, state_province),
+          property_images(image_url, is_primary)
+        `)
         .eq('id', propertyId)
+        .eq('is_active', true)
         .single();
 
       if (error) {
@@ -137,7 +148,7 @@ const Booking = () => {
         description: 'Could not load property details. Please try again.',
         variant: 'destructive',
       });
-      navigate('/');
+      navigate('/homes');
     } finally {
       setPropertyLoading(false);
     }
@@ -191,10 +202,10 @@ const Booking = () => {
           <div className="text-center">
             <div className="text-lg mb-4">Property not found</div>
             <button 
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/homes')}
               className="px-4 py-2 bg-rose-600 text-white rounded hover:bg-rose-700"
             >
-              Return Home
+              Return to Homes
             </button>
           </div>
         </div>

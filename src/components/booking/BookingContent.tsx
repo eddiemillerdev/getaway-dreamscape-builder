@@ -47,7 +47,7 @@ const BookingContent = ({
     setPaymentMethod(paymentData);
   };
 
-  // Safety check - should not happen with proper initialization
+  // Safety check - ensure we have property and required data
   if (!bookingState.property) {
     console.error('BookingContent rendered without property');
     return (
@@ -57,11 +57,21 @@ const BookingContent = ({
     );
   }
 
-  // Ensure we have valid dates
+  // Ensure we have valid dates with fallbacks
   const checkIn = bookingState.checkIn || new Date();
   const checkOut = bookingState.checkOut || new Date(Date.now() + 24 * 60 * 60 * 1000);
   const nights = bookingState.nights || 1;
   const totalAmount = bookingState.totalAmount || 0;
+  const guests = bookingState.guests || 2;
+
+  console.log('BookingContent rendering with:', {
+    property: bookingState.property,
+    checkIn,
+    checkOut,
+    nights,
+    totalAmount,
+    guests
+  });
 
   return (
     <>
@@ -70,7 +80,7 @@ const BookingContent = ({
           <TripDetails
             checkIn={checkIn}
             checkOut={checkOut}
-            guests={bookingState.guests}
+            guests={guests}
             onEdit={() => setEditModalOpen(true)}
           />
 
@@ -108,7 +118,7 @@ const BookingContent = ({
         onClose={() => setEditModalOpen(false)}
         initialCheckIn={checkIn}
         initialCheckOut={checkOut}
-        initialGuests={bookingState.guests}
+        initialGuests={guests}
         maxGuests={bookingState.property?.max_guests || 8}
         onSave={handleEditBooking}
       />
