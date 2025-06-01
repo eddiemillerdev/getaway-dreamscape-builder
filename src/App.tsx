@@ -39,6 +39,7 @@ const App = () => (
             <Route path="/home/:id" element={<Property />} />
             <Route path="/property/:id" element={<Property />} /> {/* Redirect old route */}
             <Route path="/experience/:id" element={<Experience />} />
+            <Route path="/booking/:id" element={<Booking />} />
             <Route path="/booking" element={<Booking />} />
             <Route path="/booking-success" element={<BookingSuccess />} />
             <Route path="/dashboard" element={<Dashboard />} />
