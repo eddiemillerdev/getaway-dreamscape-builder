@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -11,10 +10,10 @@ import { useToast } from '@/hooks/use-toast';
 interface HostRequestModalProps {
   open: boolean;
   onClose: () => void;
-  onRequestSubmitted: () => void;
+  onSuccess?: () => void;
 }
 
-const HostRequestModal = ({ open, onClose, onRequestSubmitted }: HostRequestModalProps) => {
+const HostRequestModal = ({ open, onClose, onSuccess }: HostRequestModalProps) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   
@@ -49,7 +48,9 @@ const HostRequestModal = ({ open, onClose, onRequestSubmitted }: HostRequestModa
         description: 'Your host application has been submitted for review.',
       });
 
-      onRequestSubmitted();
+      if (onSuccess) {
+        onSuccess();
+      }
       onClose();
       setMessage('');
     } catch (error: any) {

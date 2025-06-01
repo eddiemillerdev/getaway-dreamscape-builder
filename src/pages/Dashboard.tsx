@@ -15,7 +15,7 @@ import PaymentPreferencesModal from '@/components/modals/PaymentPreferencesModal
 import HostRequestModal from '@/components/modals/HostRequestModal';
 import WalletSection from '@/components/WalletSection';
 
-interface Booking {
+interface DashboardBooking {
   id: string;
   check_in_date: string;
   check_out_date: string;
@@ -41,10 +41,10 @@ interface Profile {
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('trips');
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useState<DashboardBooking[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<DashboardBooking | null>(null);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [paymentPreferencesOpen, setPaymentPreferencesOpen] = useState(false);
   const [hostRequestOpen, setHostRequestOpen] = useState(false);

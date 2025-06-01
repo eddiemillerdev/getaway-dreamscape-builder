@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -20,10 +19,10 @@ import {
 interface PaymentMethodModalProps {
   open: boolean;
   onClose: () => void;
-  onSave: (paymentData: any) => void;
+  onSuccess?: () => void;
 }
 
-const PaymentMethodModal = ({ open, onClose, onSave }: PaymentMethodModalProps) => {
+const PaymentMethodModal = ({ open, onClose, onSuccess }: PaymentMethodModalProps) => {
   const [selectedMethod, setSelectedMethod] = useState<'credit' | 'wire' | 'crypto'>('credit');
   const [loading, setLoading] = useState(false);
   const [cardData, setCardData] = useState({
@@ -93,8 +92,6 @@ const PaymentMethodModal = ({ open, onClose, onSave }: PaymentMethodModalProps) 
     setLoading(true);
     
     try {
-      let paymentData;
-      
       if (selectedMethod === 'credit') {
         // Save credit card to database
         const cleanNumber = cardData.number.replace(/\s/g, '');
@@ -114,32 +111,15 @@ const PaymentMethodModal = ({ open, onClose, onSave }: PaymentMethodModalProps) 
 
         if (error) throw error;
 
-        paymentData = {
-          type: 'Credit Card',
-          details: `**** **** **** ${cleanNumber.slice(-4)}`,
-          name: cardData.name,
-          brand: cardType
-        };
-
         toast({
           title: 'Payment Method Saved',
           description: 'Your credit card has been saved for future use.',
         });
-      } else if (selectedMethod === 'wire') {
-        paymentData = {
-          type: 'Bank Wire',
-          details: 'Wire transfer details will be provided',
-          name: 'Bank Transfer'
-        };
-      } else {
-        paymentData = {
-          type: 'Cryptocurrency',
-          details: 'Bitcoin payment address will be provided',
-          name: 'Bitcoin'
-        };
       }
       
-      onSave(paymentData);
+      if (onSuccess) {
+        onSuccess();
+      }
       onClose();
     } catch (error: any) {
       console.error('Error saving payment method:', error);

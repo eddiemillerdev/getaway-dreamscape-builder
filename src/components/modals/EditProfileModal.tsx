@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 interface EditProfileModalProps {
   open: boolean;
   onClose: () => void;
-  onProfileUpdated: () => void;
+  onSuccess?: () => void;
 }
 
 interface Profile {
@@ -23,7 +22,7 @@ interface Profile {
   bio: string;
 }
 
-const EditProfileModal = ({ open, onClose, onProfileUpdated }: EditProfileModalProps) => {
+const EditProfileModal = ({ open, onClose, onSuccess }: EditProfileModalProps) => {
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<Profile>({
     first_name: '',
@@ -95,7 +94,9 @@ const EditProfileModal = ({ open, onClose, onProfileUpdated }: EditProfileModalP
         description: 'Your profile has been successfully updated.',
       });
 
-      onProfileUpdated();
+      if (onSuccess) {
+        onSuccess();
+      }
       onClose();
     } catch (error: any) {
       console.error('Error updating profile:', error);
